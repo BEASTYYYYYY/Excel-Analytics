@@ -1,0 +1,248 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Define custom properties */
+:root {
+  --bg-primary: 255 255 255;
+  --text-primary: 17 24 39;
+  --accent-primary: 59 130 246;
+  --accent-secondary: 99 102 241;
+}
+.no-scrollbars {
+  
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  overflow: -moz-hidden-unscrollable;
+  /* Deprecated but sometimes needed for older Firefox */
+}
+
+::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari and Opera */
+}
+
+.dark {
+  --bg-primary: 17 24 39;
+  --text-primary: 249 250 251;
+  --accent-primary: 96 165 250;
+  --accent-secondary: 129 140 248;
+}
+
+/* Base styles */
+body {
+  background-color: rgb(var(--bg-primary));
+  color: rgb(var(--text-primary));
+  transition: background-color 300ms, color 300ms;
+  min-height: 100vh;
+  /* overflow: scroll;
+  ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch; */
+}
+
+/* Navbar styles */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  background-color: rgb(var(--bg-primary));
+  border-bottom: 1px solid rgba(var(--text-primary), 0.1);
+  z-index: 50;
+}
+
+/* Add a top margin to content to account for fixed navbar */
+
+/* Theme toggle button */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: transparent;
+  color: rgb(var(--text-primary));
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(var(--text-primary), 0.1);
+}
+
+/* Typography */
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* Custom utility classes */
+.gradient-text {
+  background-image: linear-gradient(to right, rgb(37, 99, 235), rgb(79, 70, 229));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dark .gradient-text {
+  background-image: linear-gradient(to right, rgb(96, 165, 250), rgb(129, 140, 248));
+}
+
+.card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  transition: all 300ms;
+}
+
+.dark .card {
+  background-color: rgb(31, 41, 55);
+}
+
+.btn-primary {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  color: white;
+  background-image: linear-gradient(to right, rgb(59, 130, 246), rgb(99, 102, 241));
+  transition: all 150ms;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.btn-primary:hover {
+  background-image: linear-gradient(to right, rgb(37, 99, 235), rgb(79, 70, 229));
+}
+
+.btn-danger {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  color: white;
+  background-image: linear-gradient(to right, rgb(239, 68, 68), rgb(236, 72, 153));
+  transition: all 150ms;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.btn-danger:hover {
+  background-image: linear-gradient(to right, rgb(220, 38, 38), rgb(219, 39, 119));
+}
+
+/* Button sizes */
+.btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+}
+
+/* For Loading*/
+.loader {
+  --c1: #673b14;
+  --c2: #f8b13b;
+  width: 40px;
+  height: 80px;
+  border-top: 4px solid var(--c1);
+  border-bottom: 4px solid var(--c1);
+  background: linear-gradient(90deg, var(--c1) 2px, var(--c2) 0 5px, var(--c1) 0) 50% / 7px 8px no-repeat;
+  display: grid;
+  overflow: hidden;
+  animation: l5-0 2s infinite linear;
+}
+
+.loader::before,
+.loader::after {
+  content: "";
+  grid-area: 1/1;
+  width: 75%;
+  height: calc(50% - 4px);
+  margin: 0 auto;
+  border: 2px solid var(--c1);
+  border-top: 0;
+  box-sizing: content-box;
+  border-radius: 0 0 40% 40%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) bottom / 4px 2px no-repeat,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  background:
+    linear-gradient(var(--d, 0deg), var(--c2) 50%, #0000 0) bottom / 100% 205%,
+    linear-gradient(var(--c2) 0 0) center / 0 100%;
+  background-repeat: no-repeat;
+  animation: inherit;
+  animation-name: l5-1;
+}
+
+.loader::after {
+  transform-origin: 50% calc(100% + 2px);
+  transform: scaleY(-1);
+  --s: 3px;
+  --d: 180deg;
+}
+
+@keyframes l5-0 {
+  80% {
+    transform: rotate(0);
+  }
+
+  100% {
+    transform: rotate(0.5turn);
+  }
+}
+
+@keyframes l5-1 {
+
+  10%,
+  70% {
+    background-size: 100% 205%, var(--s, 0) 100%;
+  }
+
+  70%,
+  100% {
+    background-position: top, center;
+  }
+}
