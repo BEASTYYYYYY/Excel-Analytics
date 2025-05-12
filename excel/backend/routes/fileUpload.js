@@ -55,107 +55,39 @@ router.post('/', upload.single('file'), async (req, res) => {
         }
 
         const filePath = req.file.path;
-
-        // Read workbook
         const workbook = xlsx.readFile(filePath);
-
-        if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
-            fs.unlinkSync(filePath); // Clean up uploaded file
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid Excel file format'
-            });
-        }
-
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
-        // Get data from worksheet
-        const data = xlsx.utils.sheet_to_json(worksheet);
+        // ✅ Get raw data with full column headers
+        const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
-        if (!data || !Array.isArray(data) || data.length === 0) {
-            fs.unlinkSync(filePath); // Clean up uploaded file
+        if (!jsonData || !Array.isArray(jsonData) || jsonData.length === 0) {
+            fs.unlinkSync(filePath);
             return res.status(400).json({
                 success: false,
                 message: 'No data found in the uploaded file'
             });
         }
 
-        // Process data into chart-friendly format
-        const chartData = {};
-
-        // First determine column names to use for key and value
-        const firstRow = data[0];
-        const columns = Object.keys(firstRow);
-
-        if (columns.length < 1) {
-            fs.unlinkSync(filePath);
-            return res.status(400).json({
-                success: false,
-                message: 'File must contain at least two columns of data'
-            });
-        }
-
-        // Use first column as key and second column as value by default
-        const keyColumn = columns[0];
-        const valueColumn = columns.length > 1 ? columns[1] : null;
-
-        if (valueColumn) {
-            // We have two or more columns - use key-value pairs
-            data.forEach((entry) => {
-                const key = String(entry[keyColumn] || 'undefined');
-                const rawValue = entry[valueColumn];
-
-                // Handle different value types
-                if (rawValue === undefined || rawValue === null) {
-                    // Count null/undefined values
-                    chartData[key] = (chartData[key] || 0) + 1;
-                } else if (typeof rawValue === 'number' || !isNaN(Number(rawValue))) {
-                    // Numeric values - sum them
-                    chartData[key] = (chartData[key] || 0) + Number(rawValue);
-                } else {
-                    // For string values, count occurrences
-                    if (!chartData[key]) chartData[key] = 0;
-                    chartData[key] += 1;
-                }
-            });
-        } else {
-            // We only have one column - count occurrences of each value
-            data.forEach((entry) => {
-                const key = String(entry[keyColumn] || 'undefined');
-                chartData[key] = (chartData[key] || 0) + 1;
-            });
-        }
-
-
-        // If chartData is empty after processing, return an error
-        if (Object.keys(chartData).length === 0) {
-            fs.unlinkSync(filePath);
-            return res.status(400).json({
-                success: false,
-                message: 'Could not extract valid numeric data from the file'
-            });
-        }
-
-        // Save the upload history to MongoDB with user ID
+        // ✅ Save raw jsonData (not aggregated chart data)
         const fileUploadHistory = new FileUploadHistory({
             filename: req.file.originalname,
             uploadDate: new Date(),
             fileSize: (req.file.size / 1024).toFixed(2) + ' KB',
             status: 'Processed',
-            parsedData: chartData,
-            userId: req.user.uid, // Associate with the current user
+            parsedData: jsonData, // ⬅️ Store raw rows
+            userId: req.user.uid,
         });
 
         await fileUploadHistory.save();
-
-        // Clean up uploaded file after processing
         fs.unlinkSync(filePath);
 
+        console.log('Sending data back to frontend:', jsonData);
         return res.json({
             success: true,
             message: 'File processed successfully',
-            data: chartData,
+            data: jsonData, // ⬅️ Return full raw data
             fileDetails: {
                 id: fileUploadHistory._id,
                 filename: fileUploadHistory.filename,
@@ -166,8 +98,6 @@ router.post('/', upload.single('file'), async (req, res) => {
         });
     } catch (error) {
         console.error('Upload error:', error.message);
-
-        // Clean up the file if it was uploaded
         if (req.file && req.file.path) {
             try {
                 fs.unlinkSync(req.file.path);

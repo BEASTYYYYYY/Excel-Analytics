@@ -1,306 +1,503 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { BarChart3, AlertTriangle, Loader, Layers3 } from 'lucide-react';
-import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
-import { useEffect, useRef, useState } from 'react';
-import ThreeBarChart from './ThreeBarChart';
-import ChartOptions from './ChartOptions';
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useRef } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
+    BarElement,
     PointElement,
     LineElement,
     Title,
     Tooltip,
     Legend,
-    BarElement,
-    ArcElement,
+    ArcElement
 } from 'chart.js';
+import { Bar, Line, Pie } from 'react-chartjs-2';
+import { Download, BarChart, LineChart, PieChart } from 'lucide-react';
 
-// Register required Chart.js components
+// Register ChartJS components
 ChartJS.register(
     CategoryScale,
     LinearScale,
+    BarElement,
     PointElement,
     LineElement,
-    BarElement,
     ArcElement,
     Title,
     Tooltip,
     Legend
 );
 
-export default function EnhancedChartVisualization({
-    selectedHistoryItem,
-    isAnalyzing,
-    analysis,
-    onAnalyze
-}) {
-    // Add state to toggle between chart types
+export const ChartVisualization = ({ selectedHistoryItem }) => {
+    const [selectedXAxis, setSelectedXAxis] = useState('');
+    const [selectedYAxis, setSelectedYAxis] = useState('');
     const [chartType, setChartType] = useState('bar');
-    const [is3D, setIs3D] = useState(false);
+    const [availableColumns, setAvailableColumns] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [chartData, setChartData] = useState(null);
+    const [parsedData, setParsedData] = useState(null);
+    const [colorScheme, setColorScheme] = useState('default'); // 'default', 'cool', 'warm', 'rainbow'
 
-    // Add ref to track chart instance
     const chartRef = useRef(null);
 
-    // Cleanup chart instance when component unmounts or selectedHistoryItem changes
+    // Process data when selectedHistoryItem changes
     useEffect(() => {
-        return () => {
-            // Ensure chart is destroyed when component unmounts or when selected item changes
-            if (chartRef.current && chartRef.current.chartInstance) {
-                chartRef.current.chartInstance.destroy();
-            }
-        };
-    }, [selectedHistoryItem, chartType]);
+        if (selectedHistoryItem) {
+            let dataToProcess = selectedHistoryItem.parsedData || selectedHistoryItem.data;
+            console.log("selectedHistoryItem:", selectedHistoryItem);
+            console.log("dataToProcess:", dataToProcess);
 
-    if (!selectedHistoryItem || !selectedHistoryItem.parsedData) return null;
-
-    const parsedData = selectedHistoryItem.parsedData;
-
-    // Validate parsedData is not empty
-    if (!parsedData || Object.keys(parsedData).length === 0) {
-        return (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
-                <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100 flex items-center justify-center">
-                    <AlertTriangle className="mr-2 h-6 w-6 text-yellow-600" />
-                    No Chart Data Available
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300">
-                    The uploaded file doesn't contain any valid data for visualization.
-                    Try uploading a different file or check the file format.
-                </p>
-            </div>
-        );
-    }
-
-    // Handle different data structures
-    let labels = [];
-    let values = [];
-    let datasetLabel = 'Data';
-
-    if (Array.isArray(parsedData)) {
-        // If parsedData is an array of objects
-        if (parsedData.length > 0 && typeof parsedData[0] === 'object') {
-            const fields = Object.keys(parsedData[0]);
-            if (fields.length >= 2) {
-                const labelField = fields[0];
-                const valueField = fields[1];
-
-                datasetLabel = valueField; // Use the value field name as dataset label
-                labels = parsedData.map(item => String(item[labelField] || 'Undefined'));
-
-                // Handle non-numeric data by counting occurrences
-                const valueMap = new Map();
-                parsedData.forEach(item => {
-                    const label = String(item[labelField] || 'Undefined');
-                    const value = item[valueField];
-
-                    if (typeof value === 'number' && !isNaN(value)) {
-                        // If it's a number, use it directly
-                        valueMap.set(label, (valueMap.get(label) || 0) + value);
+            if (dataToProcess) {
+                // Ensure data is in array format for consistent processing
+                if (!Array.isArray(dataToProcess)) {
+                    // Check if it's a collection of records
+                    if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+                        // Check if this is a nested data structure we need to extract from
+                        if (dataToProcess.data && Array.isArray(dataToProcess.data)) {
+                            dataToProcess = dataToProcess.data;
+                        } else {
+                            // Convert object to array while preserving original properties
+                            const objKeys = Object.keys(dataToProcess);
+                            if (objKeys.length > 0 && typeof dataToProcess[objKeys[0]] === 'object') {
+                                // Object of objects, convert to array of objects
+                                dataToProcess = objKeys.map(key => ({
+                                    id: key,
+                                    ...dataToProcess[key]
+                                }));
+                            } else {
+                                // Simple key-value object
+                                // dataToProcess = Object.entries(dataToProcess).map(([key, value]) => ({ key, value }));
+                            }
+                        }
                     } else {
-                        // For non-numeric, just count occurrences
-                        valueMap.set(label, (valueMap.get(label) || 0) + 1);
+                        setError('Invalid data format for visualization');
+                        return;
                     }
+                }
+
+                if (dataToProcess.length > 0) {
+                    processDataColumns(dataToProcess);
+                } else {
+                    setError('No data found in the selected file');
+                }
+            } else {
+                setError('No valid data found in the selected file');
+            }
+        }
+    }, [selectedHistoryItem]);
+
+    // Effect for updating chart data when selections change
+    useEffect(() => {
+        if (selectedXAxis && selectedYAxis && parsedData) {
+            prepareChartData();
+        }
+    }, [selectedXAxis, selectedYAxis, chartType, parsedData, colorScheme]);
+
+    // Get columns from parsed data
+    const processDataColumns = (data) => {
+        console.log(data);
+
+        try {
+            setIsLoading(true);
+            setParsedData(data);
+
+            // Extract column names from the first data item
+            if (Array.isArray(data) && data.length > 0) {
+                const firstItem = data[0];
+
+                // Extract all unique columns across the dataset
+                const columnSet = new Set();
+                data.forEach(item => {
+                    Object.keys(item).forEach(key => columnSet.add(key));
                 });
 
-                // Convert Map to arrays for Chart.js
-                labels = Array.from(valueMap.keys());
-                values = Array.from(valueMap.values());
+                const columns = Array.from(columnSet);
+                setAvailableColumns(columns);
+
+                // Auto-select first two columns that seem most appropriate
+                if (columns.length >= 2) {
+                    // Try to find columns that might be good for X and Y axes
+                    const possibleXColumns = columns.filter(col =>
+                        col.toLowerCase().includes('name') ||
+                        col.toLowerCase().includes('category') ||
+                        col.toLowerCase().includes('date') ||
+                        col.toLowerCase().includes('label') ||
+                        col.toLowerCase() === 'key' ||
+                        col.toLowerCase() === 'id'
+                    );
+
+                    const possibleYColumns = columns.filter(col => {
+                        // Try to determine numeric columns
+                        const sampleValue = data.find(item => item[col] !== undefined)?.[col];
+                        return (
+                            col.toLowerCase().includes('value') ||
+                            col.toLowerCase().includes('count') ||
+                            col.toLowerCase().includes('amount') ||
+                            col.toLowerCase().includes('total') ||
+                            (sampleValue !== undefined && !isNaN(Number(sampleValue)))
+                        );
+                    });
+
+                    // Set X-axis
+                    if (possibleXColumns.length > 0) {
+                        setSelectedXAxis(possibleXColumns[0]);
+                    } else {
+                        setSelectedXAxis(columns[0]);
+                    }
+
+                    // Set Y-axis
+                    if (possibleYColumns.length > 0) {
+                        setSelectedYAxis(possibleYColumns[0]);
+                    } else {
+                        // If no obvious Y column, pick the second column, or the first if only one exists
+                        setSelectedYAxis(columns.length > 1 ? columns[1] : columns[0]);
+                    }
+                } else if (columns.length === 1) {
+                    setSelectedXAxis(columns[0]);
+                    setSelectedYAxis(columns[0]);
+                }
             }
+        } catch (err) {
+            console.error('Error processing data columns:', err);
+            setError('Failed to process data columns');
+        } finally {
+            setIsLoading(false);
         }
-    } else if (typeof parsedData === 'object') {
-        // If parsedData is an object with key-value pairs
-        labels = Object.keys(parsedData);
+    };
+    // console.log(availableColumns);
+    console.log(parsedData);
+    // Convert parsed data to the format needed for charts
+    const prepareChartData = () => {
+        try {
+            setIsLoading(true);
+            setError('');
 
-        // Convert all values to numbers if possible, otherwise count as 1
-        values = labels.map(key => {
-            const val = parsedData[key];
-            return typeof val === 'number' ? val : 1;
-        });
-    }
+            if (!parsedData || parsedData.length === 0) {
+                setError('No data available for visualization');
+                setIsLoading(false);
+                return;
+            }
 
-    // If we have no data after processing
-    if (labels.length === 0 || values.length === 0) {
-        return (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
-                <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100 flex items-center justify-center">
-                    <AlertTriangle className="mr-2 h-6 w-6 text-yellow-600" />
-                    No Chart Data Available
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300">
-                    Could not extract data suitable for visualization.
-                    Try uploading a different file or check the file format.
-                </p>
-            </div>
-        );
-    }
+            let labels = [];
+            let datasets = [];
+            let values = [];
 
-    // Generate colors for the chart
-    const backgroundColors = labels.map((_, i) => {
-        const hue = (i * 137) % 360; // Golden angle approximation for color distribution
-        return `hsla(${hue}, 70%, 60%, 0.7)`;
-    });
+            // Extract data for the selected axes
+            labels = parsedData.map(item => {
+                const value = item[selectedXAxis];
+                // Handle undefined/null values
+                if (value === undefined || value === null) return 'N/A';
 
-    const borderColors = labels.map((_, i) => {
-        const hue = (i * 137) % 360;
-        return `hsla(${hue}, 70%, 60%, 1)`;
-    });
+                // Convert dates to readable format if it looks like a date
+                if (value instanceof Date) {
+                    return value.toLocaleDateString();
+                }
 
-    // Prepare data based on chart type
-    const chartData = {
-        labels: labels,
-        datasets: [
-            {
-                label: datasetLabel,
+                // Handle other types
+                return String(value);
+            });
+
+            // Extract numeric values for Y-axis
+            values = parsedData.map(item => {
+                const val = item[selectedYAxis];
+                if (val === undefined || val === null) return 0;
+                if (typeof val === 'number') return val;
+
+                const numVal = Number(val);
+                return isNaN(numVal) ? 0 : numVal;
+            });
+
+            // Generate colors based on the selected scheme
+            const colors = generateChartColors(labels.length, colorScheme);
+
+            datasets = [{
+                label: selectedYAxis,
                 data: values,
-                backgroundColor: chartType === 'line' ? borderColors[0] : backgroundColors,
-                borderColor: chartType === 'line' ? borderColors[0] : undefined,
-                borderWidth: chartType === 'line' ? 2 : 1,
-                borderRadius: chartType === 'bar' ? 6 : undefined,
-                tension: chartType === 'line' ? 0.3 : undefined,
-                fill: chartType === 'line' ? false : undefined,
-                pointBackgroundColor: chartType === 'line' ? borderColors[0] : undefined,
-                pointBorderColor: chartType === 'line' ? '#fff' : undefined,
-                pointHoverBackgroundColor: chartType === 'line' ? '#fff' : undefined,
-                pointHoverBorderColor: chartType === 'line' ? borderColors[0] : undefined,
-                pointRadius: chartType === 'line' ? 4 : undefined,
-                pointHoverRadius: chartType === 'line' ? 6 : undefined,
-            },
-        ],
-    };
+                backgroundColor: chartType === 'line' ? colors.border : colors.bg,
+                borderColor: colors.border,
+                borderWidth: 1,
+                tension: chartType === 'line' ? 0.4 : 0, // Add some smoothing to line charts
+                fill: chartType === 'line' ? false : true,
+            }];
 
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top',
-            },
-            title: {
-                display: true,
-                text: selectedHistoryItem.filename,
-                font: {
-                    size: 16
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: (context) => {
-                        const value = context.parsed.y || context.parsed || context.raw;
-                        return `${context.dataset.label}: ${value}`;
-                    }
-                }
-            }
-        },
-        scales: chartType === 'pie' || chartType === 'doughnut' ? undefined : {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Value',
-                    font: {
-                        weight: 'bold'
-                    }
-                }
-            },
-            x: {
-                title: {
-                    display: true,
-                    text: 'Category',
-                    font: {
-                        weight: 'bold'
-                    }
-                },
-                ticks: {
-                    maxRotation: 45,
-                    minRotation: 45
-                }
-            }
+            setChartData({
+                labels,
+                datasets
+            });
+
+        } catch (err) {
+            console.error('Error preparing chart data:', err);
+            setError('Failed to prepare chart data: ' + err.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Handle chart download
-    const handleDownload = () => {
-        if (chartRef.current) {
-            const canvas = chartRef.current.canvas;
-            if (canvas) {
-                // Create a temporary link element
+    // Generate colors for chart elements based on selected scheme
+    const generateChartColors = (count, scheme) => {
+        const bgColors = [];
+        const borderColors = [];
+
+        for (let i = 0; i < count; i++) {
+            let hue, saturation, lightness;
+
+            switch (scheme) {
+                case 'cool':
+                    hue = 180 + (i * 60) % 180; // Blues to greens (180-360)
+                    saturation = 70;
+                    lightness = 60;
+                    break;
+                case 'warm':
+                    hue = (i * 30) % 90; // Reds to yellows (0-90)
+                    saturation = 80;
+                    lightness = 55;
+                    break;
+                case 'rainbow':
+                    hue = (i * 40) % 360; // Full rainbow
+                    saturation = 80;
+                    lightness = 60;
+                    break;
+                default: // 'default'
+                    hue = (i * 137.5) % 360; // Golden angle for nice distribution
+                    saturation = 70;
+                    lightness = 60;
+            }
+
+            bgColors.push(`hsla(${hue}, ${saturation}%, ${lightness}%, 0.7)`);
+            borderColors.push(`hsla(${hue}, ${saturation}%, ${lightness - 10}%, 0.9)`);
+        }
+
+        return { bg: bgColors, border: borderColors };
+    };
+
+    // Handle download as PNG
+    const downloadAsPng = () => {
+        if (!chartRef.current) return;
+
+        import('html2canvas').then(html2canvasModule => {
+            const html2canvas = html2canvasModule.default;
+            const element = chartRef.current.canvas;
+
+            if (!element) return;
+
+            html2canvas(element).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `${selectedHistoryItem.filename}-${chartType}-chart.png`;
+                link.download = `${selectedHistoryItem?.filename || 'chart'}-${new Date().toISOString()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-            }
-        }
+            });
+        });
     };
 
-    // Render the appropriate chart based on type
-    const renderChart = () => {
-        if (is3D) {
-            return <ThreeBarChart labels={labels} values={values} />;
+    // Get chart options based on chart type
+    const getChartOptions = () => {
+        const baseOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: chartType === 'pie' ? 'right' : 'top',
+                },
+                title: {
+                    display: true,
+                    text: `${selectedXAxis} vs ${selectedYAxis}`,
+                    font: {
+                        size: 16
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
+                }
+            }
+        };
+
+        if (chartType !== 'pie') {
+            return {
+                ...baseOptions,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: selectedXAxis
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: selectedYAxis
+                        },
+                        beginAtZero: true
+                    }
+                }
+            };
         }
 
-        switch (chartType) {
-            case 'line':
-                return <Line data={chartData} options={chartOptions} ref={chartRef} />;
-            case 'pie':
-                return <Pie data={chartData} options={chartOptions} ref={chartRef} />;
-            case 'doughnut':
-                return <Doughnut data={chartData} options={chartOptions} ref={chartRef} />;
-            case 'bar':
-            default:
-                return <Bar data={chartData} options={chartOptions} ref={chartRef} />;
-        }
+        return baseOptions;
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center">
-                    <BarChart3 className="mr-2 h-6 w-6 text-indigo-600" />
-                    Chart Visualization: {selectedHistoryItem.filename}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                    Chart Visualization
                 </h2>
-                {chartType === 'bar' && (
+                {chartData && (
                     <button
-                        onClick={() => setIs3D(prev => !prev)}
-                        className="bg-indigo-100 dark:bg-gray-700 text-indigo-600 dark:text-white px-3 py-1 rounded-md text-sm flex items-center"
+                        onClick={downloadAsPng}
+                        className="flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm transition-colors"
                     >
-                        <Layers3 className="h-4 w-4 mr-1" />
-                        {is3D ? '2D View' : '3D View'}
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
                     </button>
                 )}
             </div>
 
-            {/* Chart Type Selection */}
-            <ChartOptions
-                activeChart={chartType}
-                setActiveChart={setChartType}
-                onDownload={handleDownload}
-            />
+            {/* Chart Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                {/* X-Axis Selection */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        X-Axis
+                    </label>
+                    <select
+                        value={selectedXAxis}
+                        onChange={(e) => setSelectedXAxis(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        disabled={isLoading || !availableColumns.length}
+                    >
+                        {availableColumns.map((column) => (
+                            <option key={column} value={column}>
+                                {column}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-            <div className="flex-grow">
-                <div className="relative h-80 overflow-hidden">
-                    {renderChart()}
+                {/* Y-Axis Selection */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Y-Axis
+                    </label>
+                    <select
+                        value={selectedYAxis}
+                        onChange={(e) => setSelectedYAxis(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        disabled={isLoading || !availableColumns.length}
+                    >
+                        {availableColumns.map((column) => (
+                            <option key={column} value={column}>
+                                {column}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Chart Type Selection */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Chart Type
+                    </label>
+                    <div className="grid grid-cols-3 gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setChartType('bar')}
+                            className={`flex items-center justify-center px-2 py-2 rounded-md ${chartType === 'bar'
+                                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                }`}
+                        >
+                            <BarChart className="h-5 w-5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setChartType('line')}
+                            className={`flex items-center justify-center px-2 py-2 rounded-md ${chartType === 'line'
+                                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                }`}
+                        >
+                            <LineChart className="h-5 w-5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setChartType('pie')}
+                            className={`flex items-center justify-center px-2 py-2 rounded-md ${chartType === 'pie'
+                                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                }`}
+                        >
+                            <PieChart className="h-5 w-5" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Color Scheme Selection */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Color Scheme
+                    </label>
+                    <select
+                        value={colorScheme}
+                        onChange={(e) => setColorScheme(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                        <option value="default">Default</option>
+                        <option value="cool">Cool</option>
+                        <option value="warm">Warm</option>
+                        <option value="rainbow">Rainbow</option>
+                    </select>
                 </div>
             </div>
 
-            {!analysis && (
-                <div className="mt-4 flex justify-center relative">
-                    <button
-                        onClick={onAnalyze}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center space-x-2"
-                        disabled={isAnalyzing}
-                    >
-                        {isAnalyzing ? (
-                            <Loader className="h-5 w-5 animate-spin" />
-                        ) : (
-                            <BarChart3 className="h-5 w-5" />
+            {/* Chart Display Area */}
+            <div className="w-full mt-4">
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                    </div>
+                ) : error ? (
+                    <div className="flex justify-center items-center h-64 text-red-500">
+                        <p>{error}</p>
+                    </div>
+                ) : chartData ? (
+                    <div className="w-full h-64 md:h-96">
+                        {chartType === 'bar' && (
+                            <Bar
+                                ref={chartRef}
+                                data={chartData}
+                                options={getChartOptions()}
+                            />
                         )}
-                        <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Data'}</span>
-                    </button>
-                </div>
-            )}
+                        {chartType === 'line' && (
+                            <Line
+                                ref={chartRef}
+                                data={chartData}
+                                options={getChartOptions()}
+                            />
+                        )}
+                        {chartType === 'pie' && (
+                            <Pie
+                                ref={chartRef}
+                                data={chartData}
+                                options={getChartOptions()}
+                            />
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex justify-center items-center h-64 text-gray-500 dark:text-gray-400">
+                        <p>Select a file and configure chart options to visualize data</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
-}
+};
+
+export default ChartVisualization;

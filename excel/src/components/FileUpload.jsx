@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { FileUp, AlertTriangle } from 'lucide-react';
-import DataPreview from './DataPreview';
 import { processExcelFile } from './utils/api';
 
-const FileUpload = ({ file, uploadSuccess, dataPreview, error, onFileSelect, onUploadSuccess, onError, showNotification }) => 
+const FileUpload = ({ file, uploadSuccess, error, onFileSelect, onUploadSuccess,  showNotification }) => 
 {
     const [dragActive, setDragActive] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -120,7 +119,6 @@ const FileUpload = ({ file, uploadSuccess, dataPreview, error, onFileSelect, onU
                         <p className="text-sm text-gray-500 mt-2">{isUploading ? 'Uploading...' : 'Processing...'}</p>
 
                         {/* Data Preview */}
-                        {dataPreview && <DataPreview data={dataPreview} />}
                     </div>
                 ) : uploadSuccess ? (
                     <div className="flex flex-col items-center text-green-600">

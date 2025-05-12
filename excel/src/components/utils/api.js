@@ -3,6 +3,8 @@ import { getAuth } from 'firebase/auth';
 
 const API_BASE_URL = 'http://localhost:5000';
 
+
+
 // Create axios instance with auth token interceptor
 const api = axios.create({
     baseURL: API_BASE_URL
@@ -177,20 +179,20 @@ export const deleteFile = async (fileId, event) => {
  * @returns {Promise<Object>} Upload response
  */
 export const processExcelFile = async (selectedFile) => {
-    // Check if user is authenticated before making the request
+
     if (!isAuthenticated()) {
         throw new Error("User not authenticated. Please log in to upload files.");
     }
 
     const formData = new FormData();
     formData.append('file', selectedFile);
+    console.log('File data:', formData.get('file'));
 
     try {
         // Use the full URL to the backend API
         const response = await api.post(`/api/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
-
         return response.data;
     } catch (error) {
         console.error("Upload error:", error);

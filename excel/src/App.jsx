@@ -7,8 +7,6 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import Dashboard from "./components/Dashboard.jsx";
 import LandingPage from "./components/LandingPage";
-import AboutPage from "./components/AboutPage.jsx";
-import ContactPage from "./components/ContactPage.jsx";
 import AdminPage from "./AdminPage.jsx";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -16,6 +14,11 @@ import { useEffect, useState } from "react";
 import { setUser, logout } from "./redux/authSlice";
 import '../chartConfig.js';
 import Loading from "./components/Loading";
+import HistoryPage from "./components/HistoryPage.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import ProfilePage from "./components/ProfilePage.jsx";
+import Settings from "./components/Settings.jsx";
+import Support from "./components/Support.jsx";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -81,22 +84,18 @@ function App() {
                 </>
               }
             />
-
-            {/* Auth routes - redirect to dashboard if already logged in */}
             <Route
               path="/login"
               element={
                 isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
               }
             />
-
             <Route
               path="/register"
               element={
                 isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />
               }
             />
-
             {/* Protected routes - require authentication */}
             <Route
               path="/dashboard"
@@ -111,14 +110,13 @@ function App() {
                 )
               }
             />
-
             <Route
-              path="/about"
+              path="/uploadhistory"
               element={
                 isAuthenticated ? (
                   <>
                     <Navbar />
-                    <AboutPage />
+                    <HistoryPage />
                   </>
                 ) : (
                   <Navigate to="/login" replace />
@@ -126,19 +124,23 @@ function App() {
               }
             />
 
-            <Route
-              path="/contact"
-              element={
-                isAuthenticated ? (
-                  <>
-                    <Navbar />
-                    <ContactPage />
-                  </>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/support" element={
+              <ProtectedRoute>
+                <Support />
+              </ProtectedRoute>
+            } />
 
             <Route
               path="/admin"
@@ -150,7 +152,6 @@ function App() {
                 )
               }
             />
-
             {/* Catch-all route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
