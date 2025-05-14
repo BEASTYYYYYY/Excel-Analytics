@@ -125,6 +125,11 @@ export const loadFileData = async (fileId) => {
  * @param {string} fileId - The ID of the file to analyze
  * @returns {Promise<Object>} The analysis results
  */
+/**
+ * Analyzes a specific file and displays the results in a user-friendly format
+ * @param {string} fileId - The ID of the file to analyze
+ * @returns {Promise<Object>} The analysis results formatted for display
+ */
 export const analyzeFile = async (fileId) => {
     try {
         // Check if user is authenticated before making the request
@@ -134,7 +139,30 @@ export const analyzeFile = async (fileId) => {
 
         const response = await api.get(`/api/upload/analyze/${fileId}`);
         if (response.data && response.data.success) {
-            return response.data.analysis;
+            // Format the results for easy display
+            const analysis = response.data.analysis;
+            const formattedResults = {
+                fileDetails: response.data.fileDetails,
+                summary: {
+                    totalRows: analysis.totalRows,
+                    totalColumns: analysis.columns.length,
+                    numericColumns: Object.keys(analysis.numericColumns).length,
+                },
+                columns: analysis.columns,
+                statistics: []
+            };
+
+            // Format numeric column statistics
+            Object.entries(analysis.numericColumns).forEach(([column, stats]) => {
+                formattedResults.statistics.push({
+                    column,
+                    average: stats.average,
+                    highest: stats.highest.value,
+                    lowest: stats.lowest.value
+                });
+            });
+
+            return formattedResults;
         }
         throw new Error("Analysis failed");
     } catch (error) {
@@ -197,5 +225,142 @@ export const processExcelFile = async (selectedFile) => {
     } catch (error) {
         console.error("Upload error:", error);
         throw error;
+    }
+};
+/**
+ * Fetches the user profile from MongoDB
+ * @returns {Promise<Object>} User profile data
+ */
+export const fetchUserProfile = async () => {
+    try {
+        const response = await api.get('/api/profile');
+        if (response.data && response.data.success) {
+            return response.data.user;
+        }
+        throw new Error("Failed to fetch user profile");
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        throw error;
+    }
+};
+
+/**
+ * Updates the user profile in MongoDB and Firebase
+ * @param {Object} profileData - The profile data to update
+ * @returns {Promise<Object>} Updated user data
+ */
+export const updateUserProfile = async (profileData) => {
+    try {
+        const response = await api.put('/api/profile', profileData);
+        if (response.data && response.data.success) {
+            return response.data.user;
+        }
+        throw new Error("Failed to update user profile");
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        throw error;
+    }
+};
+
+/**
+ * Updates user settings in MongoDB
+ * @param {Object} settingsData - The settings data to update
+ * @returns {Promise<Object>} Updated settings
+ */
+export const updateUserSettings = async (settingsData) => {
+    try {
+        const response = await api.put('/api/settings', settingsData);
+        if (response.data && response.data.success) {
+            return response.data.settings;
+        }
+        throw new Error("Failed to update user settings");
+    } catch (error) {
+        console.error("Error updating user settings:", error);
+        throw error;
+    }
+};
+
+/**
+ * Changes the user password in Firebase
+ * @param {Object} passwordData - Contains the new password
+ * @returns {Promise<Object>} Success message
+ */
+export const changeUserPassword = async (passwordData) => {
+    try {
+        const response = await api.post('/api/password', passwordData);
+        if (response.data && response.data.success) {
+            return response.data;
+        }
+        throw new Error("Failed to update password");
+    } catch (error) {
+        console.error("Error changing password:", error);
+        throw error;
+    }
+};
+
+/**
+ * Fetches the raw content of a file by ID
+ * @param {string} fileId - The ID of the file to fetch
+ * @returns {Promise<string>} - The raw file content
+ */
+export const fetchFileContent = async (fileId) => {
+    try {
+        const token = await getAuthToken();
+
+        // Replace with your actual API endpoint
+        const response = await fetch(`/api/files/${fileId}/content`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Failed to fetch file content: ${response.statusText}`);
+        }
+
+        return await response.text();
+    } catch (error) {
+        console.error('Error fetching file content:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get the authentication token for the current user
+ * @returns {Promise<string>} The authentication token
+ * @throws {Error} If user is not authenticated
+ */
+export const getAuthToken = async () => {
+    try {
+        // Import getAuth on demand to avoid circular dependencies
+        const { getAuth } = await import('firebase/auth');
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+
+        if (!currentUser) {
+            throw new Error('User not authenticated');
+        }
+
+        // Force token refresh if it's close to expiration
+        const token = await currentUser.getIdToken(/* forceRefresh */ false);
+
+        // Optional: Check token expiration
+        // The Firebase ID token has a default expiration of 1 hour
+        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        const expirationTime = decodedToken.exp * 1000; // Convert to milliseconds
+        const currentTime = Date.now();
+
+        // If token expires in less than 5 minutes, force refresh
+        if (expirationTime - currentTime < 5 * 60 * 1000) {
+            return await currentUser.getIdToken(/* forceRefresh */ true);
+        }
+
+        return token;
+    } catch (error) {
+        console.error('Error getting auth token:', error);
+        throw new Error('Authentication error: ' + (error.message || 'Failed to get auth token'));
     }
 };

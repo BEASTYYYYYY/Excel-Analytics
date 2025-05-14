@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { fetchUploadHistory, loadFileData, analyzeFile, deleteFile } from './utils/api';
 import Notification from './Notification';
+import ExcelFileViewerModal from './FileViewerModal';
 
 export default function HistoryPage() {
     const [history, setHistory] = useState([]);
@@ -13,6 +14,10 @@ export default function HistoryPage() {
     const [authChecked, setAuthChecked] = useState(false);
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
+
+    // File viewer modal state
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState({ id: null, name: '' });
 
     // Check authentication status
     useEffect(() => {
@@ -61,8 +66,15 @@ export default function HistoryPage() {
         }
     };
 
-    const handleViewFile = (fileId) => {
-        navigate(`/dashboard?fileId=${fileId}`);
+    const handleViewFile = (fileId, fileName) => {
+        // For Excel files, open the viewer modal
+        if (fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.xls')) {
+            setSelectedFile({ id: fileId, name: fileName });
+            setIsViewerOpen(true);
+        } else {
+            // For other file types, navigate to dashboard (previous behavior)
+            navigate(`/dashboard?fileId=${fileId}`);
+        }
     };
 
     const handleDeleteFile = async (fileId, event) => {
@@ -101,6 +113,14 @@ export default function HistoryPage() {
         <div className="min-h-screen bg-gray-50 text-gray-800 font-sans dark:bg-gray-900 dark:text-gray-100">
             {/* Notification */}
             <Notification notification={notification} onClose={() => setNotification({ type: '', message: '' })} />
+
+            {/* Excel File Viewer Modal */}
+            <ExcelFileViewerModal
+                isOpen={isViewerOpen}
+                onClose={() => setIsViewerOpen(false)}
+                fileId={selectedFile.id}
+                fileName={selectedFile.name}
+            />
 
             <main className="container mx-auto p-6">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
@@ -150,7 +170,7 @@ export default function HistoryPage() {
                                     </div>
                                     <div className="flex space-x-3 mt-4 justify-end">
                                         <button
-                                            onClick={() => handleViewFile(item.id)}
+                                            onClick={() => handleViewFile(item.id, item.filename)}
                                             className="text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-4 rounded-lg flex items-center space-x-1"
                                         >
                                             <Eye className="h-4 w-4 mr-1" />

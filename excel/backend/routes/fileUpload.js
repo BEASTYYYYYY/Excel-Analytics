@@ -83,7 +83,6 @@ router.post('/', upload.single('file'), async (req, res) => {
         await fileUploadHistory.save();
         fs.unlinkSync(filePath);
 
-        console.log('Sending data back to frontend:', jsonData);
         return res.json({
             success: true,
             message: 'File processed successfully',
@@ -179,6 +178,9 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// Modified analyze/:id endpoint for fileUpload.js
+// Replace the existing analyze/:id endpoint with this code
+
 router.get('/analyze/:id', async (req, res) => {
     try {
         const fileRecord = await FileUploadHistory.findOne({
@@ -194,60 +196,93 @@ router.get('/analyze/:id', async (req, res) => {
         }
 
         // Get the parsed data with safety check
-        const parsedData = fileRecord.parsedData || {};
+        const parsedData = fileRecord.parsedData || [];
 
-        // Make sure parsedData is a valid object before proceeding
-        if (!parsedData || typeof parsedData !== 'object') {
+        // Make sure parsedData is a valid array before proceeding
+        if (!Array.isArray(parsedData) || parsedData.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid data format in file record'
+                message: 'No valid data found in file record or empty dataset'
             });
         }
 
-        // Basic analysis
-        const analysis = {
-            totalEntries: Object.keys(parsedData).length,
-            summary: {},
-            highestValue: { key: null, value: -Infinity },
-            lowestValue: { key: null, value: Infinity },
-            average: 0
-        };
+        // Get all numeric columns to analyze
+        const numericColumns = {};
+        const firstRow = parsedData[0];
 
-        // Calculate statistics
-        let sum = 0;
-        let count = 0;
+        // Identify numeric columns in the dataset
+        Object.keys(firstRow).forEach(column => {
+            // Check if at least 70% of values in this column are numeric
+            const numericCount = parsedData.reduce((count, row) => {
+                const val = row[column];
+                return (val !== undefined && val !== null && !isNaN(Number(val))) ? count + 1 : count;
+            }, 0);
 
-        // Safely iterate through parsedData
-        Object.entries(parsedData).forEach(([key, value]) => {
-            // Convert value to number if it's not already
-            const numValue = Number(value);
-
-            // Only process if it's a valid number
-            if (!isNaN(numValue)) {
-                // Track highest and lowest values
-                if (numValue > analysis.highestValue.value) {
-                    analysis.highestValue = { key, value: numValue };
-                }
-
-                if (numValue < analysis.lowestValue.value) {
-                    analysis.lowestValue = { key, value: numValue };
-                }
-
-                // Add to summary
-                analysis.summary[key] = numValue;
-
-                // For average calculation
-                sum += numValue;
-                count++;
+            if (numericCount >= parsedData.length * 0.7) {
+                numericColumns[column] = {
+                    sum: 0,
+                    count: 0,
+                    highest: { value: -Infinity, rowIndex: -1 },
+                    lowest: { value: Infinity, rowIndex: -1 }
+                };
             }
         });
 
-        // Calculate average if there are entries
-        if (count > 0) {
-            analysis.average = (sum / count).toFixed(2);
-        } else {
-            analysis.average = "0.00";
-        }
+        // Calculate statistics for each numeric column
+        parsedData.forEach((row, rowIndex) => {
+            Object.keys(numericColumns).forEach(column => {
+                if (row[column] !== undefined && row[column] !== null) {
+                    const numValue = Number(row[column]);
+                    if (!isNaN(numValue)) {
+                        numericColumns[column].sum += numValue;
+                        numericColumns[column].count++;
+
+                        // Track highest
+                        if (numValue > numericColumns[column].highest.value) {
+                            numericColumns[column].highest = { value: numValue, rowIndex };
+                        }
+
+                        // Track lowest
+                        if (numValue < numericColumns[column].lowest.value) {
+                            numericColumns[column].lowest = { value: numValue, rowIndex };
+                        }
+                    }
+                }
+            });
+        });
+
+        // Format the analysis results
+        const analysis = {
+            totalRows: parsedData.length,
+            columns: Object.keys(firstRow),
+            numericColumns: {},
+            summaryStatistics: {}
+        };
+
+        // Calculate averages and format results
+        Object.keys(numericColumns).forEach(column => {
+            const stats = numericColumns[column];
+            const average = stats.count > 0 ? stats.sum / stats.count : 0;
+
+            analysis.numericColumns[column] = {
+                average: Number(average.toFixed(2)),
+                highest: {
+                    value: stats.highest.value,
+                    row: stats.highest.rowIndex >= 0 ? parsedData[stats.highest.rowIndex] : null
+                },
+                lowest: {
+                    value: stats.lowest.value,
+                    row: stats.lowest.rowIndex >= 0 ? parsedData[stats.lowest.rowIndex] : null
+                }
+            };
+        });
+
+        // Add aggregate statistics
+        analysis.summaryStatistics = {
+            rowCount: parsedData.length,
+            columnCount: Object.keys(firstRow).length,
+            numericColumnCount: Object.keys(numericColumns).length
+        };
 
         return res.json({
             success: true,

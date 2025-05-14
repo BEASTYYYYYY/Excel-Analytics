@@ -9,6 +9,8 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import fileUploadRoute from './routes/fileUpload.js';
 import canvasRoutes from './routes/canvasRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
+// Import the files routes
 
 dotenv.config();
 
@@ -33,7 +35,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/upload', fileUploadRoute);
-app.use('/api/canvas', canvasRoutes); // Canvas route registered
+app.use('/api/canvas', canvasRoutes);
+app.use('/api/profile', profileRoutes);
 
 // DB + Server Start
 mongoose.connect(process.env.MONGO_URI, {

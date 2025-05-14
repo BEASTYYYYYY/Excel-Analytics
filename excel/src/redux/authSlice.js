@@ -1,11 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getAuth } from "firebase/auth";
 import axios from 'axios';
 
 // ✅ Login thunk
 export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) => {
     try {
         const res = await axios.post('/api/auth/login', userData);
-        return res.data;
+        const auth = getAuth();
+        const firebaseUser = auth.currentUser;
+        return {
+            ...res.data,
+            displayName: firebaseUser?.displayName || "",
+            photoURL: firebaseUser?.photoURL || ""
+        };
     } catch (err) {
         return thunkAPI.rejectWithValue(err.response?.data?.message || 'Login failed');
     }
@@ -15,7 +22,14 @@ export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) =
 export const register = createAsyncThunk('auth/register', async (userData, thunkAPI) => {
     try {
         const res = await axios.post('/api/auth/register', userData);
-        return res.data;
+        const auth = getAuth();
+        const firebaseUser = auth.currentUser;
+
+        return {
+            ...res.data,
+            displayName: firebaseUser?.displayName || "",
+            photoURL: firebaseUser?.photoURL || ""
+        };
     } catch (err) {
         return thunkAPI.rejectWithValue(err.response?.data?.message || 'Register failed');
     }
@@ -36,6 +50,20 @@ const authSlice = createSlice({
         logout: (state) => {
             state.user = null;
             localStorage.removeItem('user');
+        },
+        updateUserName: (state, action) => {
+            if (state.user) {
+                state.user.displayName = action.payload;
+                const updatedUser = { ...state.user, displayName: action.payload };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+            }
+        },
+        updateUserPhoto: (state, action) => {
+            if (state.user) {
+                state.user.photoURL = action.payload;
+                const updatedUser = { ...state.user, photoURL: action.payload };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+            }
         },
     },
     extraReducers: (builder) => {
@@ -72,6 +100,6 @@ const authSlice = createSlice({
     },
 });
 
-export const { logout, setUser } = authSlice.actions;
+export const { logout, setUser, updateUserName, updateUserPhoto } = authSlice.actions;
 
 export default authSlice.reducer;

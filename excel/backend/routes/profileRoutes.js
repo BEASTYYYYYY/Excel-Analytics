@@ -1,16 +1,23 @@
-// backend/routes/userRoutes.js (or profileRoutes.js)
 import express from 'express';
-import { verifyFirebaseToken } from '../middleware/verifyToken.js'; // Ensure middleware is in the correct folder
+import {
+    getUserProfile,
+    updateUserProfile,
+    updateUserSettings,
+    changePassword
+} from '../controllers/userControllers.js';
+import { verifyFirebaseToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
 
-// Example protected route
-router.get('/profile', verifyFirebaseToken, (req, res) => {
-    res.json({
-        message: 'User profile accessed',
-        uid: req.user.uid,
-        email: req.user.email,
-    });
-});
+// All routes are protected with Firebase token verification
+router.use(verifyFirebaseToken);
+
+// User profile routes 
+router.get('/', getUserProfile); // Changed from /profile to / since base path is already /api/profile
+router.put('/', updateUserProfile); // Changed from /profile to /
+
+// User settings routes
+router.put('/settings', updateUserSettings);
+router.post('/password', changePassword);
 
 export default router;

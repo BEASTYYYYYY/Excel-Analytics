@@ -86,12 +86,18 @@ export default function Dashboard() {
             }
 
             const fileData = await loadFileData(fileId);
+
+            // ✅ Prevent duplicate re-analysis
+            if (!fileData._analyzed) {
+                fileData._analyzed = false;
+            }
+
             setSelectedHistoryItem(fileData);
             setAnalysis(null);
 
-            // If shouldAnalyze is true, automatically trigger analysis
-            if (shouldAnalyze) {
-                handleAnalyzeFile(fileId);
+            if (shouldAnalyze && !fileData._analyzed) {
+                await handleAnalyzeFile(fileId);
+                fileData._analyzed = true; // ✅ Mark as analyzed
             }
         } catch (error) {
             showNotification('error', error.message || "Failed to load file data");
@@ -99,6 +105,7 @@ export default function Dashboard() {
             setIsLoading(false);
         }
     };
+
 
     const handleAnalyzeFile = async (fileId) => {
         setIsAnalyzing(true);

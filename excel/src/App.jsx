@@ -49,11 +49,13 @@ function App() {
 
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
         dispatch(setUser({
-          uid: user.uid,
-          email: user.email,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          uid: firebaseUser.uid
         }));
       } else {
         dispatch(logout());
@@ -64,7 +66,6 @@ function App() {
     return () => unsubscribe();
   }, [dispatch]);
 
-  // Wait until authentication state is determined
   if (loading) {
     return <Loading />;
   }
