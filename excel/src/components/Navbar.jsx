@@ -86,8 +86,8 @@ const Navbar = () => {
         <Link to="/UploadHistory" className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-colors duration-300 font-semibold dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500">
           UPLOAD HISTORY
         </Link>
-        <Link to="/AboutPage" className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-colors duration-300 font-semibold dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500">
-          ABOUT
+        <Link to="/playground" className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-colors duration-300 font-semibold dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500">
+          PLAYGROUND
         </Link>
       </nav>
       <div className="flex items-center space-x-4">
@@ -157,7 +157,6 @@ const Navbar = () => {
                     <span className="text-gray-700 dark:text-gray-300">Support</span>
                   </button>
                 </div>
-
                 <div className="border-t border-gray-200 dark:border-gray-700 mt-1">
                   <button
                     onClick={handleLogout}

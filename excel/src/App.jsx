@@ -19,6 +19,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
 import Settings from "./components/Settings.jsx";
 import Support from "./components/Support.jsx";
+import Playground from "./components/Playground";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -124,9 +125,23 @@ function App() {
                 )
               }
             />
+            <Route
+              path="/playground"
+              element={
+                isAuthenticated ? (
+                  <>
+                    <Navbar />
+                    <Playground />
+                  </>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
 
             <Route path="/profile" element={
               <ProtectedRoute>
+                <Navbar/>
                 <ProfilePage />
               </ProtectedRoute>
             } />
