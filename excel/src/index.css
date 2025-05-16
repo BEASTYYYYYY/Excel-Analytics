@@ -96,6 +96,7 @@
 /* Base styles */
 body {
   background-color: rgb(var(--bg-primary));
+
   color: rgb(var(--text-primary));
   transition: background-color 300ms, color 300ms;
   min-height: 100vh;

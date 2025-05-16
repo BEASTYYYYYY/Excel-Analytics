@@ -203,9 +203,9 @@ const Playground = () => {
     }, [file]);
 
     return (
-        <div className="w-full h-screen bg-white dark:bg-[#121212] text-black dark:text-white relative">
+        <div className="m-6 ml-[22rem] h-160 bg-white dark:bg-[#121212] text-black dark:text-white relative">
             {!file ? (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-100 dark:bg-[#1e1e1e]">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-400 dark:border-gray-700 rounded-lg bg-gray-100 dark:bg-[#1e1e1e]">
                     <Upload size={48} className="text-gray-500 dark:text-gray-400 mb-4" />
                     <p className="mb-2">Drop a .glb file or click to upload</p>
                     <button onClick={() => fileInputRef.current.click()} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white">Browse Files</button>

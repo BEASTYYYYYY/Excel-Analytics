@@ -110,7 +110,7 @@ export default function HistoryPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-800 font-sans dark:bg-gray-900 dark:text-gray-100">
+        <div className="min-h-screen ml-[19rem] bg-gray-50 text-gray-800 font-sans dark:bg-gray-900 dark:text-gray-100">
             {/* Notification */}
             <Notification notification={notification} onClose={() => setNotification({ type: '', message: '' })} />
 

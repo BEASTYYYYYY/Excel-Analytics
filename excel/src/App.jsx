@@ -20,6 +20,8 @@ import ProfilePage from "./components/ProfilePage.jsx";
 import Settings from "./components/Settings.jsx";
 import Support from "./components/Support.jsx";
 import Playground from "./components/Playground";
+import Sidebar from "./components/Sidebar";
+
 
 // Firebase configuration
 const firebaseConfig = {
@@ -73,107 +75,46 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="font-sans min-h-screen flex flex-col bg-[rgb(var(--bg-primary))] text-[rgb(var(--text-primary))]">
-        <main className="flex-grow">
-          <Routes>
-            {/* Public route - Landing page visible to all */}
-            <Route
-              path="/"
-              element={
-                <>
-                  <Navbar />
-                  <LandingPage />
-                </>
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />
-              }
-            />
-            {/* Protected routes - require authentication */}
-            <Route
-              path="/dashboard"
-              element={
-                isAuthenticated ? (
+
+        <div className="font-sans min-h-screen flex flex-col bg-[rgb(var(--bg-primary))] text-[rgb(var(--text-primary))]">
+          <main className="flex-grow">
+            <Routes>
+              {/* Public route - Landing page visible to all */}
+              <Route
+                path="/"
+                element={
                   <>
                     <Navbar />
-                    <Dashboard />
+                    <LandingPage />
                   </>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-            <Route
-              path="/uploadhistory"
-              element={
-                isAuthenticated ? (
-                  <>
-                    <Navbar />
-                    <HistoryPage />
-                  </>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-            <Route
-              path="/playground"
-              element={
-                isAuthenticated ? (
-                  <>
-                    <Navbar />
-                    <Playground />
-                  </>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+                }
+              />
+              <Route
+                path="/login"
+                element={
+                  isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+                }
+              />
+              <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
+              />
+              {/* Protected routes - require authentication */}
+              <Route path="/dashboard" element={isAuthenticated ? (<><Sidebar /><Dashboard /> </>):(<Navigate to="/login" replace />)} />
+              <Route path="/uploadhistory" element={isAuthenticated ? (<><Sidebar /><HistoryPage /></>):(<Navigate to="/login" replace />)} />
+              <Route
+                path="/playground" element={isAuthenticated ? (<><Sidebar /><Playground /></>) : (<Navigate to="/login" replace />)} />
+              <Route path="/profile" element={<ProtectedRoute><Sidebar /><ProfilePage /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute>  <Settings /></ProtectedRoute>} />
+              <Route path="/support" element={<ProtectedRoute>  <Support /></ProtectedRoute>} />
+              <Route
+                path="/admin" element={isAuthenticated ? (<AdminPage />) : (<Navigate to="/login" replace />)} />
+              {/* Catch-all route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
 
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Navbar/>
-                <ProfilePage />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/support" element={
-              <ProtectedRoute>
-                <Support />
-              </ProtectedRoute>
-            } />
-
-            <Route
-              path="/admin"
-              element={
-                isAuthenticated ? (
-                  <AdminPage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-            {/* Catch-all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
     </ThemeProvider>
+
   );
 }
 

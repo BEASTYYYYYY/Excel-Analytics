@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { getAuth, updateProfile } from "firebase/auth";
 import { UserCircleIcon, CameraIcon } from "@heroicons/react/24/solid";
-import { fetchUserProfile, updateUserProfile } from "./utils/api"; 
+import { fetchUserProfile, updateUserProfile } from "./utils/api";
 import { useDispatch } from "react-redux";
 import { updateUserName } from "../redux/authSlice";
 import { updateUserPhoto } from "../redux/authSlice";
+import TabSwitcher from "./TabSwitcher";
 
 const ProfilePage = () => {
     const dispatch = useDispatch();
@@ -117,17 +118,11 @@ const ProfilePage = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-                    Your Profile
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                    Manage your personal information and account settings
-                </p>
+        <div className="container ml-[20rem] mx-auto px-4 py-8 max-w-5xl">
+            <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/background-image.png')] bg-cover	bg-center">
+                <div className="absolute inset-0 h-full w-full bg-gray-900/75"></div>
             </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
                 {isFetching ? (
                     <div className="p-8 flex justify-center">
                         <div className="animate-pulse flex space-x-4">
@@ -143,40 +138,39 @@ const ProfilePage = () => {
                     </div>
                 ) : (
                     <>
-                        <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-32"></div>
                         <div className="px-6 py-8">
                             <div className="flex flex-col md:flex-row md:items-center">
-                                <div className="relative -mt-20 mb-4 md:mb-0 md:mr-6">
-                                    <div className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
+                                    <div className="flex items-center gap-56 ">
+                                        <div className="flex items-center gap-6">
                                         {profileData.photo ? (
                                             <img
                                                 src={profileData.photo}
                                                 alt="Profile"
-                                                className="w-full h-full object-cover"
+                                                className="inline-block relative object-cover object-center w-[74px] h-[74px] rounded-lg shadow-lg shadow-blue-gray-500/40"
                                             />
                                         ) : (
                                             <UserCircleIcon className="w-28 h-28 text-gray-400 dark:text-gray-500" />
                                         )}
+                                        <div className="flex flex-col">
+                                            <h2 className="text-2xl font-bold  text-gray-900 dark:text-white">
+                                                {profileData.name || "Set Your Name"}
+                                            </h2>
+                                            <p className="text-gray-600 dark:text-gray-400">
+                                                {profileData.email}
+                                            </p>
+                                        </div>
+                                        </div>
+                                        <TabSwitcher/>
                                     </div>
-                                    <div className="absolute bottom-0 right-0 bg-white dark:bg-gray-700 rounded-full p-1 shadow-md">
-                                        <CameraIcon className="w-6 h-6 text-blue-600" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {profileData.name || "Set Your Name"}
-                                    </h2>
-                                    <p className="text-gray-600 dark:text-gray-400">
-                                        {profileData.email}
-                                    </p>
                                 </div>
                             </div>
 
                             {message.text && (
                                 <div
                                     className={`mt-6 p-4 border-l-4 rounded-md ${message.type === "success"
-                                            ? "bg-green-50 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-500 dark:text-green-200"
-                                            : "bg-red-50 border-red-500 text-red-700 dark:bg-red-900/30 dark:border-red-500 dark:text-red-200"
+                                        ? "bg-green-50 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-500 dark:text-green-200"
+                                        : "bg-red-50 border-red-500 text-red-700 dark:bg-red-900/30 dark:border-red-500 dark:text-red-200"
                                         }`}
                                 >
                                     {message.text}
