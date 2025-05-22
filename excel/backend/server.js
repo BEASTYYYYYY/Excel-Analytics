@@ -5,11 +5,13 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
+import password from '../../excel/src/api/password.js';
 import authRoutes from './routes/authRoutes.js';
 import fileUploadRoute from './routes/fileUpload.js';
 import canvasRoutes from './routes/canvasRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import insights from './routes/insights.js'; // Add this line
+
 // Import the files routes
 
 dotenv.config();
@@ -37,6 +39,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/upload', fileUploadRoute);
 app.use('/api/canvas', canvasRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/insight', insights); // Add this line
+app.use('/api/password', password); 
+
 
 // DB + Server Start
 mongoose.connect(process.env.MONGO_URI, {

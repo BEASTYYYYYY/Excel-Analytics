@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAuth } from 'firebase/auth';
+import { getAuth, EmailAuthProvider, reauthenticateWithCredential, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -119,7 +119,6 @@ export const loadFileData = async (fileId) => {
         throw error;
     }
 };
-
 /**
  * Analyzes a specific file
  * @param {string} fileId - The ID of the file to analyze
@@ -287,17 +286,47 @@ export const updateUserSettings = async (settingsData) => {
  */
 export const changeUserPassword = async (passwordData) => {
     try {
-        const response = await api.post('/api/password', passwordData);
-        if (response.data && response.data.success) {
-            return response.data;
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error("No authenticated user found. Please log in to change your password.");
         }
-        throw new Error("Failed to update password");
+        const { currentPassword, newPassword } = passwordData;
+        if (!currentPassword || !newPassword) {
+            throw new Error("Current password and new password are required");
+        }
+        // For security, Firebase requires recent authentication before changing password
+        // First, we need to reauthenticate the user with their current credentials
+        const credential = EmailAuthProvider.credential(
+            user.email,
+            currentPassword
+        );
+        try {
+            await reauthenticateWithCredential(user, credential);
+            await updatePassword(user, newPassword);
+            await api.post('/api/password', passwordData);
+            return {
+                success: true,
+                message: "Password changed successfully!"
+            };
+        } catch (authError) {
+            // Handle specific Firebase Auth errors
+            if (authError.code === 'auth/wrong-password') {
+                throw new Error("Current password is incorrect.");
+            } else if (authError.code === 'auth/too-many-requests') {
+                throw new Error("Too many failed attempts. Please try again later.");
+            } else if (authError.code === 'auth/requires-recent-login') {
+                throw new Error("For security reasons, please log out and log back in before changing your password.");
+            } else {
+                console.error("Firebase auth error:", authError);
+                throw new Error("Authentication failed: " + (authError.message || "Please try again."));
+            }
+        }
     } catch (error) {
         console.error("Error changing password:", error);
         throw error;
     }
 };
-
 /**
  * Fetches the raw content of a file by ID
  * @param {string} fileId - The ID of the file to fetch
@@ -339,20 +368,16 @@ export const getAuthToken = async () => {
         const { getAuth } = await import('firebase/auth');
         const auth = getAuth();
         const currentUser = auth.currentUser;
-
         if (!currentUser) {
             throw new Error('User not authenticated');
         }
-
         // Force token refresh if it's close to expiration
         const token = await currentUser.getIdToken(/* forceRefresh */ false);
-
         // Optional: Check token expiration
         // The Firebase ID token has a default expiration of 1 hour
         const decodedToken = JSON.parse(atob(token.split('.')[1]));
         const expirationTime = decodedToken.exp * 1000; // Convert to milliseconds
         const currentTime = Date.now();
-
         // If token expires in less than 5 minutes, force refresh
         if (expirationTime - currentTime < 5 * 60 * 1000) {
             return await currentUser.getIdToken(/* forceRefresh */ true);
@@ -364,3 +389,41 @@ export const getAuthToken = async () => {
         throw new Error('Authentication error: ' + (error.message || 'Failed to get auth token'));
     }
 };
+
+export const sendResetEmail = async () => {
+    try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user || !user.email) {
+            throw new Error("No authenticated user found.");
+        }
+
+        await sendPasswordResetEmail(auth, user.email);
+        return {
+            success: true,
+            message: `Password reset email sent to ${user.email}`
+        };
+    } catch (error) {
+        console.error("Error sending reset email:", error);
+        throw new Error(error.message || "Failed to send reset email.");
+    }
+};
+
+/**
+ * Calls the AI Insight backend for the given file
+ * @param {string} fileId - The ID of the uploaded file
+ * @returns {Promise<string>} - The AI-generated insights
+ */
+export const fetchAIInsight = async (fileId) => {
+    try {
+        const response = await api.get(`/api/insight/${fileId}`);
+        if (response.data && response.data.success) {
+            return response.data.insights;
+        }
+        throw new Error(response.data.message || "Failed to fetch AI insight.");
+    } catch (error) {
+        console.error("Error fetching AI Insight:", error);
+        throw error;
+    }
+  };

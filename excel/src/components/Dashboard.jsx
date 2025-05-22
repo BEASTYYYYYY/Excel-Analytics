@@ -1,5 +1,5 @@
-/* Dashboard.jsx */
-import Sidebar from "./Sidebar"; // Import Sidebar
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BarChart3 } from 'lucide-react';
@@ -15,7 +15,7 @@ export default function Dashboard() {
     const [notification, setNotification] = useState({ type: '', message: '' });
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [ isLoading, setIsLoading] = useState(true);
     const [analysis, setAnalysis] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [dataPreview, setDataPreview] = useState(null);
@@ -41,7 +41,6 @@ export default function Dashboard() {
             setAuthChecked(true);
             setIsLoading(false);
         });
-
         return () => unsubscribe();
     }, []);
 
@@ -65,7 +64,6 @@ export default function Dashboard() {
     const handleUploadSuccess = () => {
         setUploadSuccess(true);
         showNotification('success', "File uploaded and processed successfully!");
-
         setTimeout(() => {
             setUploadSuccess(false);
             setFile(null);
@@ -79,16 +77,12 @@ export default function Dashboard() {
             if (!user) {
                 throw new Error("Please log in to access files");
             }
-
             const fileData = await loadFileData(fileId);
-
             if (!fileData._analyzed) {
                 fileData._analyzed = false;
             }
-
             setSelectedHistoryItem(fileData);
             setAnalysis(null);
-
             if (shouldAnalyze && !fileData._analyzed) {
                 await handleAnalyzeFile(fileId);
                 fileData._analyzed = true;
@@ -106,7 +100,6 @@ export default function Dashboard() {
             if (!user) {
                 throw new Error("Please log in to analyze files");
             }
-
             const analysisResult = await analyzeFile(fileId);
             setAnalysis(analysisResult);
             showNotification('success', "Analysis completed successfully!");
@@ -126,12 +119,10 @@ export default function Dashboard() {
             </div>
         );
     }
-
     return (
         <div className="flex-1 p-6 ml-[19rem]">
             <Notification notification={notification} onClose={() => setNotification({ type: '', message: '' })} />
             <main className="container flex-1 mx-auto">
-                <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Dashboard</h1>
                 <div className="space-y-6">
                     <FileUpload
                         file={file}
@@ -144,6 +135,13 @@ export default function Dashboard() {
                         showNotification={showNotification}
                     />
                     {selectedHistoryItem && (
+                        <button
+                            onClick={() => navigate('/insight/' + selectedHistoryItem.id)}
+                            className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg transition-colors duration-300">
+                            View Ai Insights
+                        </button>
+                    )}
+                    {selectedHistoryItem && (                       
                         <ChartVisualization
                             selectedHistoryItem={selectedHistoryItem}
                             isAnalyzing={isAnalyzing}
@@ -162,8 +160,8 @@ export default function Dashboard() {
                                 onClick={() => navigate('/UploadHistory')}
                                 className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg transition-colors duration-300">
                                 View Upload History
-                            </button>
-                        </div>
+                            </button>       
+                        </div>                        
                     )}
                 </div>
             </main>

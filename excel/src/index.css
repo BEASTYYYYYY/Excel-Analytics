@@ -56,7 +56,7 @@
 }
 
 .dark {
-  --bg-primary: 17 24 39;
+  --bg-primary: 245 247 248 1;
   --text-primary: 249 250 251;
   --accent-primary: 96 165 250;
   --accent-secondary: 129 140 248;
@@ -95,7 +95,7 @@
 
 /* Base styles */
 body {
-  background-color: rgb(var(--bg-primary));
+  background-color: rgb(245 247 248 );
 
   color: rgb(var(--text-primary));
   transition: background-color 300ms, color 300ms;

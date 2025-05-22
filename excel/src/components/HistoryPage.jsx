@@ -1,11 +1,10 @@
-/* eslint-disable no-unused-vars */
-import { useState, useEffect } from 'react';
-import { FileUp, History, Calendar, BarChart2, Trash2, Eye } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { fetchUploadHistory, loadFileData, analyzeFile, deleteFile } from './utils/api';
-import Notification from './Notification';
-import ExcelFileViewerModal from './FileViewerModal';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from "react";
+import { FileUp, Trash2, Eye, BarChart2, Calendar } from "lucide-react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { fetchUploadHistory, deleteFile } from "./utils/api";
+import Notification from "./Notification";
 
 export default function HistoryPage() {
     const [history, setHistory] = useState([]);
@@ -15,195 +14,113 @@ export default function HistoryPage() {
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
-    // File viewer modal state
-    const [isViewerOpen, setIsViewerOpen] = useState(false);
-    const [selectedFile, setSelectedFile] = useState({ id: null, name: '' });
-
-    // Check authentication status
     useEffect(() => {
         const auth = getAuth();
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             setAuthChecked(true);
         });
-
         return () => unsubscribe();
     }, []);
 
-    // Fetch data once auth is checked
     useEffect(() => {
-        if (authChecked) {
-            if (user) {
-                fetchUploadHistoryData();
-            } else {
-                navigate('/login');
-                showNotification('error', 'Please log in to view your files');
-                setIsLoading(false);
-            }
+        if (authChecked && user) {
+            loadHistory();
         }
-    }, [authChecked, user, navigate]);
+    }, [authChecked, user]);
 
-    // Function to show notifications
-    const showNotification = (type, message, duration = 5000) => {
-        setNotification({ type, message });
-        setTimeout(() => setNotification({ type: '', message: '' }), duration);
-    };
-
-    const fetchUploadHistoryData = async () => {
+    const loadHistory = async () => {
         setIsLoading(true);
         try {
-            if (!user) {
-                throw new Error("User not authenticated");
-            }
-
-            const processedHistory = await fetchUploadHistory();
-            setHistory(processedHistory);
-        } catch (err) {
-            console.error("Error fetching history:", err);
-            showNotification('error', err.message || "Failed to fetch upload history. Please try again later.");
+            const data = await fetchUploadHistory();
+            setHistory(data);
+        } catch (error) {
+            showNotification(error, "Failed to fetch upload history.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleViewFile = (fileId, fileName) => {
-        // For Excel files, open the viewer modal
-        if (fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.xls')) {
-            setSelectedFile({ id: fileId, name: fileName });
-            setIsViewerOpen(true);
-        } else {
-            // For other file types, navigate to dashboard (previous behavior)
-            navigate(`/dashboard?fileId=${fileId}`);
-        }
-    };
-
-    const handleDeleteFile = async (fileId, event) => {
-        event.stopPropagation();
-        try {
-            if (!user) {
-                throw new Error("Please log in to delete files");
-            }
-
-            const result = await deleteFile(fileId);
-            if (result.success) {
-                showNotification('success', "File deleted successfully!");
-                setHistory(history.filter(item => item.id !== fileId));
-            }
-        } catch (error) {
-            showNotification('error', error.message || "Failed to delete file");
-        }
+    const showNotification = (type, message, duration = 5000) => {
+        setNotification({ type, message });
+        setTimeout(() => setNotification({ type: '', message: '' }), duration);
     };
 
     const handleAnalyzeFile = (fileId) => {
         navigate(`/dashboard?fileId=${fileId}&analyze=true`);
     };
 
-    // If we haven't checked auth status yet, show a loading indicator
-    if (!authChecked) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-gray-600">Loading account information...</p>
-                </div>
-            </div>
-        );
-    }
+    const handleDeleteFile = async (fileId, e) => {
+        e.stopPropagation();
+        try {
+            const res = await deleteFile(fileId);
+            if (res.success) {
+                setHistory(history.filter((f) => f.id !== fileId));
+                showNotification("success", "File deleted successfully");
+            }
+        } catch (error) {
+            showNotification(error, "Error deleting file");
+        }
+    };
+    //
+    if (!authChecked) return <p className="p-4">Checking auth...</p>;
 
     return (
-        <div className="min-h-screen ml-[19rem] bg-gray-50 text-gray-800 font-sans dark:bg-gray-900 dark:text-gray-100">
-            {/* Notification */}
+        <div className="mt-12 mb-8 flex flex-col gap-12 ml-[20rem] mr-5">
             <Notification notification={notification} onClose={() => setNotification({ type: '', message: '' })} />
-
-            {/* Excel File Viewer Modal */}
-            <ExcelFileViewerModal
-                isOpen={isViewerOpen}
-                onClose={() => setIsViewerOpen(false)}
-                fileId={selectedFile.id}
-                fileName={selectedFile.name}
-            />
-
-            <main className="container mx-auto p-6">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-3">
-                            <History className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Upload History</h1>
-                        </div>
-                        <button
-                            onClick={fetchUploadHistoryData}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors duration-300"
-                        >
-                            <span>Refresh</span>
-                        </button>
-                    </div>
-
-                    {/* Upload History List */}
-                    {isLoading ? (
-                        <div className="flex justify-center py-12">
-                            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                        </div>
-                    ) : history.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {history.map(item => (
-                                <div
-                                    key={item.id}
-                                    className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg hover:shadow-md transition-shadow"
-                                >
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-800 flex items-center justify-center">
-                                                <FileUp className="h-6 w-6 text-indigo-600" />
-                                            </div>
-                                            <h3 className="font-medium text-gray-800 dark:text-gray-100">{item.filename}</h3>
-                                        </div>
-                                        <button
-                                            onClick={(e) => handleDeleteFile(item.id, e)}
-                                            className="text-red-500 hover:text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 p-1 rounded-full"
-                                            title="Delete file"
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-300 mb-4">
-                                        <Calendar className="h-4 w-4 mr-2" />
-                                        {item.uploadDate}
-                                    </div>
-                                    <div className="flex space-x-3 mt-4 justify-end">
-                                        <button
-                                            onClick={() => handleViewFile(item.id, item.filename)}
-                                            className="text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-4 rounded-lg flex items-center space-x-1"
-                                        >
-                                            <Eye className="h-4 w-4 mr-1" />
-                                            <span>View</span>
-                                        </button>
-                                        <button
-                                            onClick={() => handleAnalyzeFile(item.id)}
-                                            className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-4 rounded-lg flex items-center space-x-1"
-                                        >
-                                            <BarChart2 className="h-4 w-4 mr-1" />
-                                            <span>Analyze</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-12 text-center">
-                            <FileUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">No Upload History</h3>
-                            <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
-                                You haven't uploaded any files yet. Go to the Dashboard to upload your first file.
-                            </p>
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg transition-colors duration-300"
-                            >
-                                Go to Dashboard
-                            </button>
-                        </div>
-                    )}
+            <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
+                <div className="relative bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-[#252525] to-[#3a3a3a] text-white shadow-gray-900/20 shadow-lg -mt-6 mb-8 p-6">
+                    <h6 className="block antialiased tracking-normal font-sans text-base font-semibold leading-relaxed text-white">
+                        Upload History
+                    </h6>
                 </div>
-            </main>
+                <div className="p-6 overflow-x-scroll px-0 pt-0 pb-2">
+                    <table className="w-full min-w-[640px] table-auto">
+                        <thead>
+                            <tr>
+                                <th className="border-b py-3 px-5 text-left text-[11px] font-bold uppercase text-blue-gray-400">Filename</th>
+                                <th className="border-b py-3 px-5 text-left text-[11px] font-bold uppercase text-blue-gray-400">Date</th>
+                                <th className="border-b py-3 px-5 text-left text-[11px] font-bold uppercase text-blue-gray-400">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {isLoading ? (
+                                <tr><td colSpan="3" className="text-center py-6">Loading...</td></tr>
+                            ) : history.length === 0 ? (
+                                <tr><td colSpan="3" className="text-center py-6">No upload history found</td></tr>
+                            ) : (
+                                history.map(item => (
+                                    <tr key={item.id}>
+                                        <td className="py-3 px-5 border-b">
+                                            <div className="flex items-center gap-4">
+                                                <FileUp className="h-5 w-5 text-indigo-500" />
+                                                <span className="text-sm font-medium text-blue-gray-900">{item.filename}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-5 border-b">
+                                            <div className="flex items-center text-sm text-blue-gray-600">
+                                                <Calendar className="h-4 w-4 mr-2" />
+                                                {item.uploadDate}
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-5 border-b">
+                                            <div className="flex gap-3">
+                                               
+                                                <button onClick={() => handleAnalyzeFile(item.id)} title="Analyze" className="text-sm text-white bg-indigo-600 px-3 py-1.5 rounded-md flex items-center gap-1">
+                                                    <BarChart2 className="w-4 h-4" /> Analyze
+                                                </button>
+                                                <button onClick={(e) => handleDeleteFile(item.id, e)} title="Delete" className="text-sm text-white bg-red-600 px-3 py-1.5 rounded-md flex items-center gap-1">
+                                                    <Trash2 className="w-4 h-4" /> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 }

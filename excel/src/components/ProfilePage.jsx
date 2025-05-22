@@ -118,10 +118,8 @@ const ProfilePage = () => {
     }
 
     return (
-        <div className="container ml-[20rem] mx-auto px-4 py-8 max-w-5xl">
-            <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/background-image.png')] bg-cover	bg-center">
-                <div className="absolute inset-0 h-full w-full bg-gray-900/75"></div>
-            </div>
+        <div className="container ml-[20rem] max-w-5xl ">
+            <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/background-image.png')] bg-cover	bg-center"><div className="absolute inset-0 h-full w-full bg-gray-900/75"></div></div>
             <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
                 {isFetching ? (
                     <div className="p-8 flex justify-center">
@@ -141,8 +139,8 @@ const ProfilePage = () => {
                         <div className="px-6 py-8">
                             <div className="flex flex-col md:flex-row md:items-center">
                                 <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
-                                    <div className="flex items-center gap-56 ">
-                                        <div className="flex items-center gap-6">
+                                    <div className="flex flex-row items-center gap-86 ">
+                                        <div className=" flex relative space-x-4 ">
                                         {profileData.photo ? (
                                             <img
                                                 src={profileData.photo}
@@ -152,7 +150,7 @@ const ProfilePage = () => {
                                         ) : (
                                             <UserCircleIcon className="w-28 h-28 text-gray-400 dark:text-gray-500" />
                                         )}
-                                        <div className="flex flex-col">
+                                        <div className="flex flex-col mt-2">
                                             <h2 className="text-2xl font-bold  text-gray-900 dark:text-white">
                                                 {profileData.name || "Set Your Name"}
                                             </h2>
