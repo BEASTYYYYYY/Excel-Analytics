@@ -1,32 +1,21 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+// src/App.jsx
+import { Route, Routes, useLocation } from "react-router-dom";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { ThemeProvider } from "./context/themeProvider";
 import store from "./redux/store";
 import Navbar from "./components/Navbar";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import Dashboard from "./components/Dashboard.jsx";
-import LandingPage from "./components/LandingPage";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { setUser, logout } from "./redux/authSlice";
 import '../chartConfig.js';
 import Loading from "./components/Loading";
-import HistoryPage from "./components/HistoryPage.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import ProfilePage from "./components/ProfilePage.jsx";
-import Settings from "./components/Settings.jsx";
-import Support from "./components/Support.jsx";
-import Playground from "./components/Playground";
 import Sidebar from "./components/Sidebar";
 import DashboardConfigurator from "./components/Configurator";
 import { colorOptions, typeOptions } from "./components/Configurator";
 import ConfigTool from "./components/ConfigTool";
-import Insight from "./components/Insight";
-import AdminDashboard from "../admin/AdminDash";
-import UploadStats from "../admin/components/UploadStats";
-import AdminSettings from "../admin/components/AdminSettings";
+import AppRoutes from "./routes/AppRoutes";
+import LandingPage from "./components/LandingPage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDGd9lEUBaCB4yNGCF7IyNAlg23DgAZt6c",
@@ -45,7 +34,6 @@ function AppWrapper() {
 
 function App() {
   const [isSticky, setIsSticky] = useState(false);
-
   const dispatch = useDispatch();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -74,8 +62,11 @@ function App() {
   };
 
   const [configOpen, setConfigOpen] = useState(false);
+
+  // Routes where sidebar and navbar should be hidden
   const hideSidebarRoutes = ["/login", "/register"];
-  const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname);
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && !isAdminRoute;
 
   useEffect(() => {
     const auth = getAuth();
@@ -97,15 +88,15 @@ function App() {
 
   if (loading) return <Loading />;
 
-
-
   return (
     <ThemeProvider>
+
       <div className="font-sans min-h-screen flex flex-col">
+        {/* Show sidebar and navbar only for non-admin routes */}
         {shouldShowSidebar && isAuthenticated && (
           <>
             <Sidebar activeColorClass={activeColorClass} sidebarStyle={sidebarStyle} />
-            <Navbar isStickyEnabled={isSticky}></Navbar>
+            <Navbar isStickyEnabled={isSticky} />
             {configOpen && (
               <DashboardConfigurator
                 onColorChange={handleColorChange}
@@ -119,26 +110,11 @@ function App() {
             <ConfigTool onClick={() => setConfigOpen(prev => !prev)} />
           </>
         )}
-
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<><LandingPage /></>} />
-            <Route path="/insight/:fileId" element={<Insight />} />
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
-            <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />} />
-            <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />} />
-            <Route path="/uploadhistory" element={isAuthenticated ? <HistoryPage /> : <Navigate to="/login" replace />} />
-            <Route path="/playground" element={isAuthenticated ? <Playground /> : <Navigate to="/login" replace />} />
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-            <Route path="/admin" element={isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" replace />} />
-            <Route path="/upload-stats" element={isAuthenticated ? <UploadStats /> : <Navigate to="/login" replace />} />
-            <Route path="/admin-settings" element={isAuthenticated ? <AdminSettings /> : <Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+        <main className={`flex-grow ${shouldShowSidebar && isAuthenticated ? '' : 'w-full'}`}>
+          <AppRoutes />
         </main>
       </div>
+
     </ThemeProvider>
   );
 }

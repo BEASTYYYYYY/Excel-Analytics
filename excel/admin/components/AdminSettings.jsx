@@ -95,15 +95,15 @@ const AdminSettings = () => {
         }
     };
 
-    const tabs = [
+    const   tabs = [
         { id: 'general', label: 'General', icon: Settings },
-        { id: 'security', label: 'Security', icon: Shield },
+        // { id: 'security', label: 'Security', icon: Shield },
         { id: 'uploads', label: 'File Uploads', icon: Upload },
         { id: 'email', label: 'Email', icon: Mail },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'performance', label: 'Performance', icon: Zap },
-        { id: 'backup', label: 'Backup', icon: Database },
-        { id: 'users', label: 'User Management', icon: Users },
+        // { id: 'backup', label: 'Backup', icon: Database },
+        { id: 'users', label: 'User Manage', icon: Users },
     ];
 
     const SettingCard = ({ title, description, children, icon: Icon }) => (
