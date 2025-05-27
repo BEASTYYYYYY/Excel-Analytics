@@ -13,6 +13,7 @@ import Support from "../components/Support.jsx";
 import Playground from "../components/Playground";
 import Insight from "../components/Insight";
 import AdminRoutes from "./AdminRoutes";
+import ProtectedAdminRoute from "./ProtectedAdminRoute";
 
 const AppRoutes = () => {
     const user = useSelector(state => state.auth.user);
@@ -25,8 +26,6 @@ const AppRoutes = () => {
                 path="/"
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
             />
-
-            {/* Auth Routes */}
             <Route
                 path="/login"
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
@@ -35,8 +34,6 @@ const AppRoutes = () => {
                 path="/register"
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
             />
-
-            {/* Protected Routes */}
             <Route
                 path="/dashboard"
                 element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
@@ -65,11 +62,7 @@ const AppRoutes = () => {
                 path="/support"
                 element={<ProtectedRoute><Support /></ProtectedRoute>}
             />
-
-            {/* Admin Routes */}
-            <Route path="/admin/*" element={<AdminRoutes />} />
-
-            {/* Fallback - redirect to appropriate page based on auth status */}
+            <Route path="/admin/*" element={<ProtectedAdminRoute><AdminRoutes /></ProtectedAdminRoute>} />
             <Route
                 path="*"
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />}

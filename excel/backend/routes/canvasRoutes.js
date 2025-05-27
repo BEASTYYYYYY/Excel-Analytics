@@ -8,11 +8,9 @@ const router = express.Router();
 router.post('/', async (req, res) => {
     try {
         const { data } = req.body;
-
         if (!data) {
             return res.status(400).json({ message: 'Canvas data is required.' });
         }
-
         let canvasDoc = await CanvasData.findOne();
         if (canvasDoc) {
             canvasDoc.data = data;
@@ -21,15 +19,12 @@ router.post('/', async (req, res) => {
             canvasDoc = new CanvasData({ data });
             await canvasDoc.save();
         }
-
         res.status(200).json({ message: 'Canvas data saved successfully.' });
     } catch (err) {
         console.error('Error saving canvas data:', err.message);
         res.status(500).json({ message: 'Internal server error.' });
     }
 });
-
-// Load canvas data
 router.get('/', async (req, res) => {
     try {
         const canvasDoc = await CanvasData.findOne();

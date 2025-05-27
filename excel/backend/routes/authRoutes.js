@@ -9,22 +9,16 @@ router.post('/firebase-login', async (req, res) => {
     const { token } = req.body;
 
     try {
-        //  Verify Firebase token
         const decodedToken = await admin.auth().verifyIdToken(token);
         const { uid, name, email, picture } = decodedToken;
-
-        //  Prepare update object safely
         const updateData = {
             uid,
             email,
             name: name || email?.split('@')[0],
         };
-
         if (picture) {
             updateData.photo = picture;
         }
-
-        //  Upsert user into MongoDB
         const user = await User.findOneAndUpdate(
             { uid },
             updateData,

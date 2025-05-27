@@ -1,69 +1,97 @@
-import React, { useState } from 'react';
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useState } from 'react';
 import { BarChart3, Users, Upload, Activity, Brain, FileText, Calendar, Filter, Download, MoreVertical, Eye, EyeOff, RefreshCw, Key } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
 
 const AdminDashboard = () => {
     const [showAdminKey, setShowAdminKey] = useState(false);
+    const [users, setUsers] = useState([]);
+    const [currentUserRole, setCurrentUserRole] = useState(null);
+    const [userFetchError, setUserFetchError] = useState('');
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        activeUsers: 0,
+        totalUploads: 0
+    });
+      
 
-    const totalUploads = 1500;
-    const activeUsers = 120;
-    const insightsRequested = 300;
-    const failedRequests = 5;
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const token = await getAuth().currentUser.getIdToken();
+                const res = await fetch('/api/users', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    setUserFetchError(data.message);
+                } else {
+                    setUsers(data.users);
+                }
+                const profileRes = await fetch('/api/profile', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const profileData = await profileRes.json();
+                if (profileData.success) {
+                    setCurrentUserRole(profileData.user.role);
+                  }
+                console.log("Current role:", profileData.user.role);
+
+                const statsRes = await fetch('/api/users/stats', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const statsData = await statsRes.json();
+                if (statsData.success) {
+                    setStats(statsData.stats);
+                  }
+
+            } catch (err) {
+                console.error('User fetch failed:', err);
+                setUserFetchError('Failed to load user data');
+            }
+        };
+
+        fetchUsers();
+    }, []);
     const adminKey = 'abc123xyz789';
 
-    const uploads = [
-        { user: 'alice@example.com', filename: 'report1.xlsx', date: '2025-05-20', size: '2.4 MB', status: 'success' },
-        { user: 'bob@example.com', filename: 'data.csv', date: '2025-05-21', size: '1.8 MB', status: 'success' },
-        { user: 'charlie@example.com', filename: 'analysis.xlsx', date: '2025-05-22', size: '3.2 MB', status: 'processing' },
-        { user: 'diana@example.com', filename: 'metrics.csv', date: '2025-05-22', size: '1.1 MB', status: 'failed' },
-    ];
 
-    const stats = [
-        {
-            title: 'Total Uploads',
-            value: totalUploads.toLocaleString(),
-            change: '+12%',
-            icon: Upload,
-            color: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            trend: 'up'
-        },
-        {
-            title: 'Active Users',
-            value: activeUsers.toLocaleString(),
-            change: '+8%',
-            icon: Users,
-            color: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            trend: 'up'
-        },
-        {
-            title: 'AI Insights',
-            value: insightsRequested.toLocaleString(),
-            change: '+24%',
-            icon: Brain,
-            color: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            trend: 'up'
-        },
-        {
-            title: 'Failed Requests',
-            value: failedRequests.toLocaleString(),
-            change: '-15%',
-            icon: Activity,
-            color: 'bg-gradient-to-br from-red-500 to-red-600',
-            trend: 'down'
-        },
-    ];
+    
 
     const handleRegenerate = () => {
         alert('Admin key regenerated!');
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'success': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400';
-            case 'processing': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400';
-            case 'failed': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+    const handleRoleChange = async (uid, newRole) => {
+        try {
+            const token = await getAuth().currentUser.getIdToken();
+            const res = await fetch(`/api/users/${uid}/role`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ role: newRole }),
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                // Refresh users list
+                setUsers((prevUsers) =>
+                    prevUsers.map((user) =>
+                        user.uid === uid ? { ...user, role: newRole } : user
+                    )
+                );
+            } else {
+                alert('Failed to change role: ' + data.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Server error while changing role');
         }
     };
+      
 
     return (
         <div className="space-y-6">
@@ -83,46 +111,52 @@ const AdminDashboard = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
-                    <div
-                        key={index}
-                        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className={`p-3 rounded-xl ${stat.color}`}>
-                                <stat.icon className="w-6 h-6 text-white" />
-                            </div>
-                            <div className={`text-sm font-medium px-2 py-1 rounded-full ${stat.trend === 'up'
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
-                                : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                                }`}>
-                                {stat.change}
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</h3>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stat.value}</p>
-                        </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                {/* Total Users */}
+                <div className="flex items-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+                    <div className="p-4 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20H4v-2a3 3 0 015.356-1.857M15 11a4 4 0 10-8 0 4 4 0 008 0z" />
+                        </svg>
                     </div>
-                ))}
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</h3>
+                        <p className="text-xl font-semibold text-gray-900 dark:text-white">{stats.totalUsers}</p>
+                    </div>
+                </div>
+
+                {/* Active Users */}
+                <div className="flex items-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+                    <div className="p-4 rounded-full bg-green-100 text-emerald-600 dark:bg-green-900 dark:text-emerald-300 mr-4">
+                        <Brain></Brain>
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Users</h3>
+                        <p className="text-xl font-semibold text-gray-900 dark:text-white">{stats.activeUsers}</p>
+                    </div>
+                </div>
+
+                {/* Total Uploads */}
+                <div className="flex items-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+                    <div className="p-4 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300 mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M4 12l1.293-1.293a1 1 0 011.414 0L12 16l5.293-5.293a1 1 0 011.414 0L20 12M12 4v12" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Uploads</h3>
+                        <p className="text-xl font-semibold text-gray-900 dark:text-white">{stats.totalUploads}</p>
+                    </div>
+                </div>
             </div>
 
-            {/* Recent Uploads Table */}
+            {/* Registered Users Table (was: Recent Uploads) */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Uploads</h2>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1">Latest file uploads and their status</p>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <Filter className="w-4 h-4 text-gray-500" />
-                            </button>
-                            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <Download className="w-4 h-4 text-gray-500" />
-                            </button>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Registered Users</h2>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage platform users and roles</p>
                         </div>
                     </div>
                 </div>
@@ -130,51 +164,48 @@ const AdminDashboard = () => {
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-700/50">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">File</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Size</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Login</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {uploads.map((upload, index) => (
+                            {users.map((user, index) => (
                                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                                <span className="text-white text-sm font-medium">{upload.user.charAt(0).toUpperCase()}</span>
-                                            </div>
-                                            <div className="ml-3">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{upload.user}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <FileText className="w-4 h-4 text-gray-400 mr-2" />
-                                            <span className="text-sm text-gray-900 dark:text-white">{upload.filename}</span>
-                                        </div>
-                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{user.name || '—'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm capitalize text-gray-500 dark:text-gray-400">{user.role}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {upload.size}
+                                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                            <Calendar className="w-4 h-4 mr-1" />
-                                            {upload.date}
-                                        </div>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        {user.isActive ? (
+                                            <span className="text-emerald-600 font-medium">Active</span>
+                                        ) : (
+                                            <span className="text-gray-500">Inactive</span>
+                                        )}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(upload.status)}`}>
-                                            {upload.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
-                                            <MoreVertical className="w-4 h-4 text-gray-400" />
-                                        </button>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        {currentUserRole === 'superadmin' && user.role !== 'superadmin' && (
+                                            user.role === 'user' ? (
+                                                <button
+                                                    onClick={() => handleRoleChange(user.uid, 'admin')}
+                                                    className="text-blue-600 hover:text-blue-800"
+                                                >
+                                                    Promote to Admin
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleRoleChange(user.uid, 'user')}
+                                                    className="text-red-600 hover:text-red-800"
+                                                >
+                                                    Demote to User
+                                                </button>
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -182,6 +213,7 @@ const AdminDashboard = () => {
                     </table>
                 </div>
             </div>
+
 
             {/* Admin Key Section */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">

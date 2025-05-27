@@ -1,12 +1,28 @@
 import User from '../models/userModel.js';
 import { getAuth } from 'firebase-admin/auth';
+import FileUploadHistory from '../models/fileUploadHistory.js';
 
-// Get user profile
+export const getAllUsers = async (req, res) => {
+    try {
+        const currentUser = await User.findOne({ uid: req.user.uid });
+        if (!currentUser || !currentUser.isAdmin()) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        const users = await User.find(
+            { role: { $in: ['user', 'admin'] } },
+            '-_id uid name email photo role lastLogin isActive'
+        );
+
+        res.status(200).json({ success: true, users });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 export const getUserProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-
-        // Find user in MongoDB by Firebase UID
         const user = await User.findOne({ uid });
 
         if (!user) {
@@ -15,7 +31,6 @@ export const getUserProfile = async (req, res) => {
                 message: 'User not found'
             });
         }
-
         res.status(200).json({
             success: true,
             user: {
@@ -23,6 +38,7 @@ export const getUserProfile = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 photo: user.photo,
+                role: user.role,
                 settings: user.settings || {}
             }
         });
@@ -35,32 +51,24 @@ export const getUserProfile = async (req, res) => {
     }
 };
 
-// Update user profile
 export const updateUserProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
         const { name, photo } = req.body;
-
-        // Find and update user in MongoDB
         let user = await User.findOne({ uid });
 
         if (!user) {
-            // Create new user if not found
             user = new User({
                 uid,
                 name,
                 email: req.user.email,
-                photo
+                photo: photo || req.user.photo, 
             });
         } else {
-            // Update existing user
             user.name = name || user.name;
             user.photo = photo || user.photo;
         }
-
         await user.save();
-
-        // Also update Firebase display name and photo URL
         try {
             await getAuth().updateUser(uid, {
                 displayName: name,
@@ -68,7 +76,6 @@ export const updateUserProfile = async (req, res) => {
             });
         } catch (firebaseError) {
             console.error('Firebase update error:', firebaseError);
-            // Continue with MongoDB update even if Firebase update fails
         }
 
         res.status(200).json({
@@ -90,13 +97,10 @@ export const updateUserProfile = async (req, res) => {
     }
 };
 
-// Update user settings
 export const updateUserSettings = async (req, res) => {
     try {
         const uid = req.user.uid;
         const { emailNotifications, darkModeDefault, language } = req.body;
-
-        // Find user in MongoDB
         let user = await User.findOne({ uid });
 
         if (!user) {
@@ -105,13 +109,9 @@ export const updateUserSettings = async (req, res) => {
                 message: 'User not found'
             });
         }
-
-        // Initialize settings object if it doesn't exist
         if (!user.settings) {
             user.settings = {};
         }
-
-        // Update settings
         user.settings.emailNotifications = emailNotifications !== undefined ?
             emailNotifications : user.settings.emailNotifications;
 
@@ -148,8 +148,6 @@ export const changePassword = async (req, res) => {
                 message: 'Password must be at least 6 characters long'
             });
         }
-
-        // Update password in Firebase
         await getAuth().updateUser(uid, {
             password: newPassword
         });
@@ -164,5 +162,59 @@ export const changePassword = async (req, res) => {
             success: false,
             message: `Error changing password: ${error.message}`
         });
+    }
+};
+
+export const changeUserRole = async (req, res) => {
+    try {
+        const currentUser = await User.findOne({ uid: req.user.uid });
+        const { uid } = req.params;
+        const { role } = req.body;
+
+        if (!currentUser || !currentUser.isSuperAdmin()) {
+            return res.status(403).json({ success: false, message: 'Only superadmins can change roles' });
+        }
+        if (!['user', 'admin', 'superadmin'].includes(role)) {
+            return res.status(400).json({ success: false, message: 'Invalid role' });
+        }
+        const userToUpdate = await User.findOne({ uid });
+
+        if (!userToUpdate) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        userToUpdate.role = role;
+        await userToUpdate.save();
+
+        res.status(200).json({ success: true, message: `User promoted to ${role}` });
+    } catch (error) {
+        console.error('Error changing role:', error);
+        res.status(500).json({ success: false, message: 'Error changing role' });
+    }
+};
+
+export const getUserStats = async (req, res) => {
+    try {
+        const currentUser = await User.findOne({ uid: req.user.uid });
+
+        if (!currentUser || !currentUser.isAdmin()) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const totalUsers = await User.countDocuments({ role: { $in: ['user', 'admin'] } });
+        const activeUsers = await User.countDocuments({ isActive: true, role: { $in: ['user', 'admin'] } });
+        const totalUploads = await FileUploadHistory.countDocuments();
+
+        res.json({
+            success: true,
+            stats: {
+                totalUsers,
+                activeUsers,
+                totalUploads
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching stats:', error.message);
+        res.status(500).json({ success: false, message: 'Error fetching stats' });
     }
 };

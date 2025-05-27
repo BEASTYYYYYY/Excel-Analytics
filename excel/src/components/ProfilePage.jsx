@@ -33,10 +33,14 @@ const ProfilePage = () => {
                     });
                     // Then fetch from MongoDB (more complete data)
                     const mongoProfile = await fetchUserProfile();
+
                     setProfileData({
                         name: mongoProfile.name || user.displayName || "",
                         email: mongoProfile.email || user.email || "",
-                        photo: mongoProfile.photo || user.photoURL || ""
+                        photo:
+                            mongoProfile.photo && mongoProfile.photo.trim() !== ""
+                                ? mongoProfile.photo
+                                : user.photoURL || ""
                     });
                 } catch (error) {
                     console.error("Error loading profile:", error);

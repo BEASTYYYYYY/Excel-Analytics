@@ -20,11 +20,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
-// Apply authentication middleware to all routes
 router.use(verifyFirebaseToken);
-
-// Get all file upload history for the current user
 router.get('/history', async (req, res) => {
     try {
         // Filter history by the current user's ID
@@ -44,7 +40,6 @@ router.get('/history', async (req, res) => {
         });
     }
 });
-
 router.post('/', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
@@ -53,13 +48,10 @@ router.post('/', upload.single('file'), async (req, res) => {
                 message: 'No file uploaded'
             });
         }
-
         const filePath = req.file.path;
         const workbook = xlsx.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-
-        // ✅ Get raw data with full column headers
         const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
         if (!jsonData || !Array.isArray(jsonData) || jsonData.length === 0) {
@@ -69,8 +61,6 @@ router.post('/', upload.single('file'), async (req, res) => {
                 message: 'No data found in the uploaded file'
             });
         }
-
-        // ✅ Save raw jsonData (not aggregated chart data)
         const fileUploadHistory = new FileUploadHistory({
             filename: req.file.originalname,
             uploadDate: new Date(),
@@ -79,7 +69,6 @@ router.post('/', upload.single('file'), async (req, res) => {
             parsedData: jsonData, // ⬅️ Store raw rows
             userId: req.user.uid,
         });
-
         await fileUploadHistory.save();
         fs.unlinkSync(filePath);
 

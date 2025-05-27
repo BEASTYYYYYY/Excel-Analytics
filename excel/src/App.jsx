@@ -15,7 +15,6 @@ import DashboardConfigurator from "./components/Configurator";
 import { colorOptions, typeOptions } from "./components/Configurator";
 import ConfigTool from "./components/ConfigTool";
 import AppRoutes from "./routes/AppRoutes";
-import LandingPage from "./components/LandingPage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDGd9lEUBaCB4yNGCF7IyNAlg23DgAZt6c",

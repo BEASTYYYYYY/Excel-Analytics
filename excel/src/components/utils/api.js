@@ -2,15 +2,9 @@ import axios from 'axios';
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 
 const API_BASE_URL = 'http://localhost:5000';
-
-
-
-// Create axios instance with auth token interceptor
 const api = axios.create({
     baseURL: API_BASE_URL
 });
-
-// Add auth token to all requests
 api.interceptors.request.use(async (config) => {
     try {
         // Get the current user from firebase
@@ -23,12 +17,9 @@ api.interceptors.request.use(async (config) => {
             config.headers.Authorization = `Bearer ${token}`;
         } else {
             console.warn("No authenticated user found for API request");
-            // You might want to handle unauthenticated state here
-            // For example, redirect to login or show an error
         }
     } catch (error) {
         console.error("Error setting auth token:", error);
-        // Don't throw the error to allow the request to continue, but without auth
     }
     return config;
 });
@@ -41,7 +32,6 @@ export const isAuthenticated = () => {
     const auth = getAuth();
     return !!auth.currentUser;
 };
-
 /**
  * Fetches the upload history from the server
  * @returns {Promise<Array>} The processed history items
@@ -52,7 +42,6 @@ export const fetchUploadHistory = async () => {
         if (!isAuthenticated()) {
             throw new Error("User not authenticated. Please log in to view your upload history.");
         }
-
         // Use the full URL to the backend API
         const response = await api.get(`/api/upload/history`);
         if (response.data && response.data.success) {
@@ -77,7 +66,6 @@ export const fetchUploadHistory = async () => {
         throw err;
     }
 };
-
 /**
  * Loads file data for a specific file
  * @param {string} fileId - The ID of the file to load
@@ -94,12 +82,10 @@ export const loadFileData = async (fileId) => {
         const response = await api.get(`/api/upload/${fileId}`);
         if (response.data && response.data.success) {
             const item = response.data;
-
             // Check if data exists and is valid
             if (!item.data || Object.keys(item.data).length === 0) {
                 throw new Error("The file doesn't contain valid data for visualization");
             }
-
             return {
                 id: item.fileDetails.id,
                 filename: item.fileDetails.filename,
@@ -150,7 +136,6 @@ export const analyzeFile = async (fileId) => {
                 columns: analysis.columns,
                 statistics: []
             };
-
             // Format numeric column statistics
             Object.entries(analysis.numericColumns).forEach(([column, stats]) => {
                 formattedResults.statistics.push({
@@ -170,8 +155,7 @@ export const analyzeFile = async (fileId) => {
         throw new Error("Failed to analyze file: " + errorMessage);
     }
 };
-
-/**
+/*
  * Deletes a specific file
  * @param {string} fileId - The ID of the file to delete
  * @param {Event} event - The event object to stop propagation
@@ -182,7 +166,6 @@ export const deleteFile = async (fileId, event) => {
     if (event) {
         event.stopPropagation();
     }
-
     try {
         // Check if user is authenticated before making the request
         if (!isAuthenticated()) {
@@ -206,15 +189,12 @@ export const deleteFile = async (fileId, event) => {
  * @returns {Promise<Object>} Upload response
  */
 export const processExcelFile = async (selectedFile) => {
-
     if (!isAuthenticated()) {
         throw new Error("User not authenticated. Please log in to upload files.");
     }
-
     const formData = new FormData();
     formData.append('file', selectedFile);
     console.log('File data:', formData.get('file'));
-
     try {
         // Use the full URL to the backend API
         const response = await api.post(`/api/upload`, formData, {

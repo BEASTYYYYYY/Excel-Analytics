@@ -10,7 +10,8 @@ import authRoutes from './routes/authRoutes.js';
 import fileUploadRoute from './routes/fileUpload.js';
 import canvasRoutes from './routes/canvasRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
-import insights from './routes/insights.js'; // Add this line
+import insights from './routes/insights.js';
+import userRoutes from './routes/userRoutes.js'; 
 
 // Import the files routes
 
@@ -41,6 +42,7 @@ app.use('/api/canvas', canvasRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/insight', insights); // Add this line
 app.use('/api/password', password); 
+app.use('/api/users', userRoutes)
 
 
 // DB + Server Start

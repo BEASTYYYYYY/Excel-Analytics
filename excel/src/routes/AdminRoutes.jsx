@@ -11,19 +11,14 @@ import AdminLayout from "../../admin/AdminLayout";
 const AdminRoutes = () => {
     const user = useSelector(state => state.auth.user);
     const isAuthenticated = !!user;
-
-    // Check if user has admin privileges
-    // You can implement your admin check logic here
-    const isAdmin = true; // Replace with actual admin check
+    const isAdmin = true; 
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
-
     if (!isAdmin) {
         return <Navigate to="/dashboard" replace />;
     }
-
     return (
         <AdminLayout>
             <Routes>

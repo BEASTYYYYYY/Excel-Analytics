@@ -1,39 +1,47 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext,  useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
-// Create a context for theme management
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-    // Get theme from localStorage or system preference as fallback
+    const location = useLocation();
+
+    const isAdminRoute = location.pathname.startsWith("/admin");
+
     const [theme, setTheme] = useState(() => {
-        // If running in a browser environment
         if (typeof window !== 'undefined') {
             const savedTheme = localStorage.getItem("theme");
-            if (savedTheme) return savedTheme;
 
-            // Check system preference if no saved theme
-            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            // ⛔ Only respect saved/system preference if admin route
+            if (isAdminRoute) {
+                if (savedTheme) return savedTheme;
+                return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            }
+
+            // ✅ Force light for non-admin
+            return "light";
         }
-
-        // Default to light for SSR
         return "light";
     });
 
-    // Apply theme effect
     useEffect(() => {
-        // Early return if not in browser
         if (typeof window === 'undefined') return;
 
-        // Apply to document element
+        // ⛔ On user routes: always light mode
+        if (!isAdminRoute) {
+            document.documentElement.classList.remove("dark");
+            localStorage.setItem("theme", "light");
+            return;
+        }
+
+        // ✅ Admin route: apply theme
         document.documentElement.classList.toggle("dark", theme === "dark");
-
-        // Store in localStorage
         localStorage.setItem("theme", theme);
-    }, [theme]);
+    }, [theme, isAdminRoute]);
 
-    // Toggle theme function
     const toggleTheme = () => {
-        setTheme(prevTheme => prevTheme === "light" ? "dark" : "light");
+        if (!isAdminRoute) return; // prevent toggle outside admin
+        setTheme(prev => prev === "light" ? "dark" : "light");
     };
 
     return (
@@ -41,13 +49,4 @@ export function ThemeProvider({ children }) {
             {children}
         </ThemeContext.Provider>
     );
-}
-
-// Custom hook to use the theme
-export function useTheme() {
-    const context = useContext(ThemeContext);
-    if (context === null) {
-        throw new Error("useTheme must be used within a ThemeProvider");
-    }
-    return context;
 }
