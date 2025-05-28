@@ -55,10 +55,6 @@ const AdminDashboard = () => {
         fetchUsers();
     }, []);
     const adminKey = 'abc123xyz789';
-
-
-    
-
     const handleRegenerate = () => {
         alert('Admin key regenerated!');
     };
@@ -74,7 +70,6 @@ const AdminDashboard = () => {
                 },
                 body: JSON.stringify({ role: newRole }),
             });
-
             const data = await res.json();
             if (data.success) {
                 // Refresh users list
@@ -91,6 +86,30 @@ const AdminDashboard = () => {
             alert('Server error while changing role');
         }
     };
+    const handleBlockToggle = async (uid) => {
+        try {
+            const token = await getAuth().currentUser.getIdToken();
+            const res = await fetch(`/api/users/${uid}/block`, {
+                method: "PATCH",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setUsers(prev =>
+                    prev.map(user =>
+                        user.uid === uid ? { ...user, isActive: data.user.isActive } : user
+                    )
+                );
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error blocking/unblocking user.");
+        }
+    };
       
 
     return (
@@ -104,27 +123,23 @@ const AdminDashboard = () => {
                     </div>
                     <div className="hidden lg:block">
                         <div className="w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center">
-                            <BarChart3 className="w-16 h-16 text-white" />
+                            <BarChart3 className="w-16 h-16 text-black" />
                         </div>
                     </div>
                 </div>
             </div>
-
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {/* Total Users */}
                 <div className="flex items-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
                     <div className="p-4 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20H4v-2a3 3 0 015.356-1.857M15 11a4 4 0 10-8 0 4 4 0 008 0z" />
-                        </svg>
+                        <Users></Users>
                     </div>
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</h3>
                         <p className="text-xl font-semibold text-gray-900 dark:text-white">{stats.totalUsers}</p>
                     </div>
                 </div>
-
                 {/* Active Users */}
                 <div className="flex items-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
                     <div className="p-4 rounded-full bg-green-100 text-emerald-600 dark:bg-green-900 dark:text-emerald-300 mr-4">
@@ -139,9 +154,7 @@ const AdminDashboard = () => {
                 {/* Total Uploads */}
                 <div className="flex items-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
                     <div className="p-4 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300 mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M4 12l1.293-1.293a1 1 0 011.414 0L12 16l5.293-5.293a1 1 0 011.414 0L20 12M12 4v12" />
-                        </svg>
+                        <Upload></Upload>
                     </div>
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Uploads</h3>
@@ -205,6 +218,14 @@ const AdminDashboard = () => {
                                                     Demote to User
                                                 </button>
                                             )
+                                        )}
+                                        {currentUserRole !== 'user' && user.role !== 'superadmin' && (
+                                            <button
+                                                onClick={() => handleBlockToggle(user.uid)}
+                                                className={`ml-4 ${user.isActive ? 'text-red-600' : 'text-green-600'} hover:underline`}
+                                            >
+                                                {user.isActive ? 'Block User' : 'Unblock User'}
+                                            </button>
                                         )}
                                     </td>
                                 </tr>

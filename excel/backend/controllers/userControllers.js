@@ -72,7 +72,7 @@ export const updateUserProfile = async (req, res) => {
         try {
             await getAuth().updateUser(uid, {
                 displayName: name,
-                photoURL: photo,
+                photoURL: user.photo,
             });
         } catch (firebaseError) {
             console.error('Firebase update error:', firebaseError);
@@ -202,7 +202,12 @@ export const getUserStats = async (req, res) => {
         }
 
         const totalUsers = await User.countDocuments({ role: { $in: ['user', 'admin'] } });
-        const activeUsers = await User.countDocuments({ isActive: true, role: { $in: ['user', 'admin'] } });
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+        const activeUsers = await User.countDocuments({
+            lastLogin: { $gte: thirtyDaysAgo },
+            role: { $in: ['user', 'admin'] }
+        });
         const totalUploads = await FileUploadHistory.countDocuments();
 
         res.json({
@@ -216,5 +221,34 @@ export const getUserStats = async (req, res) => {
     } catch (error) {
         console.error('Error fetching stats:', error.message);
         res.status(500).json({ success: false, message: 'Error fetching stats' });
+    }
+};
+
+export const toggleUserBlock = async (req, res) => {
+    try {
+        const currentUser = await User.findOne({ uid: req.user.uid });
+        const { uid } = req.params;
+
+        if (!currentUser || !currentUser.isAdmin()) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const user = await User.findOne({ uid });
+
+        if (!user || user.role === 'superadmin') {
+            return res.status(404).json({ success: false, message: 'User not found or cannot block superadmin' });
+        }
+
+        user.isActive = !user.isActive; // ✅ toggle block state
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: `User ${user.isActive ? 'unblocked' : 'blocked'} successfully.`,
+            user: { uid: user.uid, isActive: user.isActive }
+        });
+    } catch (error) {
+        console.error('Block/unblock error:', error.message);
+        res.status(500).json({ success: false, message: 'Error updating user status' });
     }
 };
