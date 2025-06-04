@@ -7,6 +7,7 @@ import AdminSettings from "../../admin/components/AdminSettings";
 import AdminKeySection from "../../admin/components/AdminKeySection";
 import RecentUploadsTable from "../../admin/components/RecentUploadsTable";
 import AdminLayout from "../../admin/AdminLayout";
+import AccessBlocked from "../../AccessBlocked";
 
 const AdminRoutes = () => {
     const user = useSelector(state => state.auth.user);
@@ -22,6 +23,7 @@ const AdminRoutes = () => {
     return (
         <AdminLayout>
             <Routes>
+                <Route path="/blocked" element={<AccessBlocked />} />
                 <Route index element={<AdminDashboard />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="upload-stats" element={<UploadStats />} />

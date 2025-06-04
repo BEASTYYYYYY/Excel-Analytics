@@ -1,15 +1,70 @@
-// src/components/ProtectedRoute.jsx
-import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { getAuth } from "firebase/auth";
 
 const ProtectedRoute = ({ children }) => {
-    const { user } = useSelector((state) => state.auth);
+    const [isAllowed, setIsAllowed] = useState(null); // null = loading
+    const [checking, setChecking] = useState(true);
+    const location = useLocation();
 
-    if (!user) {
-        return <Navigate to="/login" replace />;
+    useEffect(() => {
+        const checkAccess = async () => {
+            let tries = 0;
+            while (!getAuth().currentUser && tries < 20) {
+                await new Promise((res) => setTimeout(res, 100));
+                tries++;
+            }
+            const user = getAuth().currentUser;
+            if (!user) {
+                setIsAllowed(false);
+                return;
+            }
+            const token = await user.getIdToken();
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const res = await fetch("/api/profile", {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    if (res.status === 403) {
+                        setIsAllowed(false);
+                        return;
+                    }
+                    if (!res.ok) {
+                        console.warn("Retrying profile fetch:", res.status);
+                        await new Promise((res) => setTimeout(res, 1000 * (i + 1)));
+                        continue;
+                    }
+                    const data = await res.json();
+                    setIsAllowed(data.user?.isActive !== false);
+                    return;
+                } catch (err) {
+                    console.warn("Profile check error, retrying:", err.message);
+                    await new Promise((res) => setTimeout(res, 1000 * (i + 1)));
+                }
+            }
+            console.warn("Unable to confirm access after retries");
+            setIsAllowed(true); // fallback to allow
+        };
+        checkAccess();
+    }, []);
+    if (checking) {
+        return (
+            <div className="min-h-screen flex items-center justify-center text-gray-500 dark:text-gray-400">
+                Checking access...
+            </div>
+        );
     }
-
+    if (!isAllowed && location.pathname !== "/blocked") {
+        console.log("Access denied, redirecting to /blocked");
+        return <Navigate to="/blocked" replace />;
+    }
+    if (isAllowed && location.pathname === "/blocked") {
+        console.log("Access granted, redirecting to /dashboard");
+        return <Navigate to="/dashboard" replace />;
+      }
+    
     return children;
 };
-
 export default ProtectedRoute;

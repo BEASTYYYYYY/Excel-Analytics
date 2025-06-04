@@ -43,6 +43,19 @@ export default function Dashboard() {
         });
         return () => unsubscribe();
     }, []);
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const token = await getAuth().currentUser.getIdToken();
+            const res = await fetch("/api/profile", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (data.notification) {
+                setNotification(data.notification);
+            }
+        };
+        fetchProfile();
+    }, []);
 
     useEffect(() => {
         if (authChecked && !user) {

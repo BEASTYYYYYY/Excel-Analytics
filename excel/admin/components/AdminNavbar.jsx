@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Bell, User, Menu, ChevronDown, Sun, Moon } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import NotificationBell from './utility/NotificationBell';
 
 const AdminNavbar = ({ darkMode, setDarkMode, sidebarOpen, setSidebarOpen }) => {
     const [profileOpen, setProfileOpen] = useState(false);
@@ -49,7 +50,6 @@ const AdminNavbar = ({ darkMode, setDarkMode, sidebarOpen, setSidebarOpen }) => 
                             className="pl-10 pr-4 py-2 w-64 bg-gray-100 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500"
                         />
                     </div>
-
                     {/* Dark Mode Toggle */}
                     <button
                         onClick={() => setDarkMode(!darkMode)}
@@ -61,13 +61,8 @@ const AdminNavbar = ({ darkMode, setDarkMode, sidebarOpen, setSidebarOpen }) => 
                             <Moon className="w-5 h-5 text-gray-600" />
                         )}
                     </button>
-
                     {/* Notifications */}
-                    <button className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative">
-                        <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                    </button>
-
+                    <NotificationBell />
                     {/* Profile Dropdown */}
                     <div className="relative">
                         <button

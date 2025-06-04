@@ -10,14 +10,8 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
         { name: 'Upload Stats', to: '/admin/upload-stats', icon: BarChart3 },
         { name: 'Recent Uploads', to: '/admin/uploads', icon: Upload },
         { name: 'API Keys', to: '/admin/api-keys', icon: Key },
-        { name: 'User Management', to: '/admin/users', icon: Users },
         { name: 'Settings', to: '/admin/settings', icon: Settings },
     ];
-
-    // const getCurrentPageName = () => {
-    //     const currentItem = sidebarItems.find(item => item.to === location.pathname);
-    //     return currentItem ? currentItem.name : 'Dashboard';
-    // };
 
     return (
         <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>

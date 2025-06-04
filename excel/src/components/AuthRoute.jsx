@@ -11,18 +11,18 @@ const AuthRoute = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                setLoading(false); // Authenticated
+                setLoading(false);
             } else {
                 setLoading(false);
-                navigate('/login'); // Not authenticated → redirect
+                navigate('/login'); 
             }
         });
 
-        return () => unsubscribe(); // Clean up listener
+        return () => unsubscribe(); 
     }, [auth, navigate]);
 
     if (loading) {
-        return <Loading></Loading>; // JSX is valid here, not in backend
+        return <Loading></Loading>; 
     }
 
     return <>{children}</>;

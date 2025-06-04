@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
 import { getAuth } from 'firebase-admin/auth';
 import FileUploadHistory from '../models/fileUploadHistory.js';
+import UnblockRequest from '../models/unblockRequest.js';
 
 export const getAllUsers = async (req, res) => {
     try {
@@ -12,7 +13,6 @@ export const getAllUsers = async (req, res) => {
             { role: { $in: ['user', 'admin'] } },
             '-_id uid name email photo role lastLogin isActive'
         );
-
         res.status(200).json({ success: true, users });
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -24,12 +24,17 @@ export const getUserProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
         const user = await User.findOne({ uid });
-
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
+        }
+        let unblockNotice = null;
+        if (user.isActive && user.unblockNotified === false) {
+            unblockNotice = "Your access has been restored. Thank you for your patience.";
+            user.unblockNotified = true;
+            await user.save();
         }
         res.status(200).json({
             success: true,
@@ -39,8 +44,11 @@ export const getUserProfile = async (req, res) => {
                 email: user.email,
                 photo: user.photo,
                 role: user.role,
+                isActive: user.isActive, // ← ADD THIS
                 settings: user.settings || {}
-            }
+            },
+
+            notification: unblockNotice // ✅ included for toast on frontend
         });
     } catch (error) {
         console.error('Error getting user profile:', error);
@@ -50,6 +58,7 @@ export const getUserProfile = async (req, res) => {
         });
     }
 };
+  
 
 export const updateUserProfile = async (req, res) => {
     try {
@@ -227,28 +236,153 @@ export const getUserStats = async (req, res) => {
 export const toggleUserBlock = async (req, res) => {
     try {
         const currentUser = await User.findOne({ uid: req.user.uid });
+        if (!currentUser || currentUser.role !== "superadmin") {
+            return res.status(403).json({ success: false, message: "Unauthorized" });
+        }
+
         const { uid } = req.params;
+        const user = await User.findOne({ uid });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        if (user.role === "superadmin") {
+            return res.status(403).json({ success: false, message: "Cannot block a superadmin" });
+        }
+        user.isActive = !user.isActive;
+        if (user.isActive) {
+            user.unblockNotified = false; // ✅ User gets notified on dashboard
+        }
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: `User ${user.isActive ? "unblocked" : "blocked"} successfully.`,
+            user: { uid: user.uid, isActive: user.isActive },
+        });
+    } catch (err) {
+        console.error("toggleUserBlock error:", err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+export const submitUnblockRequest = async (req, res) => {
+    try {
+        const existing = await UnblockRequest.findOne({ uid: req.user.uid, reviewed: false });
+        if (existing) {
+            return res.status(400).json({ message: "You already submitted a request." });
+        }
+        const { name, email, reason, message, urgency } = req.body;
+        if (!name || !email || !reason || !message) {
+            return res.status(400).json({ message: "All required fields must be filled." });
+        }
+        const request = new UnblockRequest({
+            uid: req.user.uid,
+            name,
+            email,
+            reason,
+            message,
+            urgency
+        });
+        await request.save();
+        res.status(200).json({ success: true, message: "Request submitted." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+};
+  
+// Admin fetches unblock requests
+export const getUnblockRequests = async (req, res) => {
+    const currentUser = await User.findOne({ uid: req.user.uid });
+    if (!currentUser || !currentUser.isAdmin()) {
+        return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const requests = await UnblockRequest.find({ reviewed: false }).sort({ createdAt: -1 });
+    res.json({ success: true, requests });
+  };
+
+export const deleteUnblockRequest = async (req, res) => {
+    try {
+        const currentUser = await User.findOne({ uid: req.user.uid });
 
         if (!currentUser || !currentUser.isAdmin()) {
-            return res.status(403).json({ success: false, message: 'Unauthorized' });
+            return res.status(403).json({ message: 'Forbidden' });
         }
 
-        const user = await User.findOne({ uid });
+        const { uid } = req.params;
+        const deleted = await UnblockRequest.findOneAndDelete({ uid });
 
-        if (!user || user.role === 'superadmin') {
-            return res.status(404).json({ success: false, message: 'User not found or cannot block superadmin' });
+        if (!deleted) {
+            return res.status(404).json({ message: 'Request not found or already deleted' });
         }
 
-        user.isActive = !user.isActive; // ✅ toggle block state
-        await user.save();
+        res.status(200).json({ success: true, message: 'Request deleted successfully' });
+    } catch (err) {
+        console.error("Error deleting unblock request:", err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const getRecentActivities = async (req, res) => {
+    try {
+        const recentUsers = await User.find({ role: { $in: ['user', 'admin'] } })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('createdAt');
+
+        const recentUploads = await FileUploadHistory.find({})
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('createdAt');
 
         res.status(200).json({
             success: true,
-            message: `User ${user.isActive ? 'unblocked' : 'blocked'} successfully.`,
-            user: { uid: user.uid, isActive: user.isActive }
+            recentUsers,
+            recentUploads
         });
     } catch (error) {
-        console.error('Block/unblock error:', error.message);
-        res.status(500).json({ success: false, message: 'Error updating user status' });
+        console.error("Error fetching recent activity:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+// Get recent uploads
+export const getRecentUploads = async (req, res) => {
+    try {
+        const uploads = await FileUploadHistory.find({})
+            .sort({ createdAt: -1 })
+            .limit(50)
+            .select('_id user filename createdAt fileSize');
+
+        // Get user UIDs from upload records
+        const uids = uploads.map(u => u.user).filter(Boolean);
+        const users = await User.find({ uid: { $in: uids } }, 'uid name');
+        const userMap = Object.fromEntries(users.map(u => [u.uid, u.name]));
+
+        // Attach name manually
+        const uploadsWithNames = uploads.map(upload => ({
+            ...upload.toObject(),
+            userName: userMap[upload.user] || '—'
+        }));
+
+        res.status(200).json({ success: true, uploads: uploadsWithNames });
+    } catch (err) {
+        console.error('Error fetching uploads:', err);
+        res.status(500).json({ success: false, message: 'Server error fetching uploads' });
+    }
+};
+
+// Delete an upload
+export const deleteUpload = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleted = await FileUploadHistory.findByIdAndDelete(id);
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: 'Upload not found' });
+        }
+        res.status(200).json({ success: true, message: 'Upload deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting upload:', err);
+        res.status(500).json({ success: false, message: 'Server error while deleting upload' });
+    }
+};
+  

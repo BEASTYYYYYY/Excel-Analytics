@@ -15,11 +15,11 @@ const ProtectedAdminRoute = ({ children }) => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
-                if (data.success && ["admin", "superadmin"].includes(data.user.role)) {
+                if (data.success && ["admin", "superadmin"].includes(data.user.role) && data.user.isActive !== false) {
                     setAuthorized(true);
                 } else {
                     setAuthorized(false);
-                }
+                }                
             } catch (err) {
                 console.error("Admin check failed:", err);
                 setAuthorized(false);
@@ -33,6 +33,7 @@ const ProtectedAdminRoute = ({ children }) => {
     if (checking) {
         return <div className="p-6 text-center">Checking permissions...</div>;
     }
+    
 
     return authorized ? children : <Navigate to="/not-authorized" />;
 };

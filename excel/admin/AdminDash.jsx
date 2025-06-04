@@ -6,6 +6,7 @@ import { getAuth } from 'firebase/auth';
 const AdminDashboard = () => {
     const [showAdminKey, setShowAdminKey] = useState(false);
     const [users, setUsers] = useState([]);
+    const [unblockRequests, setUnblockRequests] = useState([]);
     const [currentUserRole, setCurrentUserRole] = useState(null);
     const [userFetchError, setUserFetchError] = useState('');
     const [stats, setStats] = useState({
@@ -13,7 +14,18 @@ const AdminDashboard = () => {
         activeUsers: 0,
         totalUploads: 0
     });
-      
+
+    useEffect(() => {
+        const fetchRequests = async () => {
+            const token = await getAuth().currentUser.getIdToken();
+            const res = await fetch("/unblock-requests", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) setUnblockRequests(data.requests);
+        };
+        fetchRequests();
+    }, []);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -35,7 +47,11 @@ const AdminDashboard = () => {
                 const profileData = await profileRes.json();
                 if (profileData.success) {
                     setCurrentUserRole(profileData.user.role);
-                  }
+
+                    // if (profileData.notification) {
+                    //     alert(profileData.notification);
+                    // }
+                }
                 console.log("Current role:", profileData.user.role);
 
                 const statsRes = await fetch('/api/users/stats', {
@@ -44,7 +60,7 @@ const AdminDashboard = () => {
                 const statsData = await statsRes.json();
                 if (statsData.success) {
                     setStats(statsData.stats);
-                  }
+                }
 
             } catch (err) {
                 console.error('User fetch failed:', err);
@@ -54,6 +70,25 @@ const AdminDashboard = () => {
 
         fetchUsers();
     }, []);
+
+    useEffect(() => {
+        const targetUid = localStorage.getItem("highlightUser");
+        if (targetUid) {
+            setTimeout(() => {
+                const el = document.getElementById(`user-${targetUid}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    el.classList.add("ring-2", "ring-blue-500");
+
+                    setTimeout(() => {
+                        el.classList.remove("ring-2", "ring-blue-500");
+                    }, 3000);
+                }
+                localStorage.removeItem("highlightUser");
+            }, 300);
+        }
+    }, []);
+
     const adminKey = 'abc123xyz789';
     const handleRegenerate = () => {
         alert('Admin key regenerated!');
@@ -72,7 +107,6 @@ const AdminDashboard = () => {
             });
             const data = await res.json();
             if (data.success) {
-                // Refresh users list
                 setUsers((prevUsers) =>
                     prevUsers.map((user) =>
                         user.uid === uid ? { ...user, role: newRole } : user
@@ -86,6 +120,7 @@ const AdminDashboard = () => {
             alert('Server error while changing role');
         }
     };
+
     const handleBlockToggle = async (uid) => {
         try {
             const token = await getAuth().currentUser.getIdToken();
@@ -110,7 +145,6 @@ const AdminDashboard = () => {
             alert("Error blocking/unblocking user.");
         }
     };
-      
 
     return (
         <div className="space-y-6">
@@ -187,7 +221,7 @@ const AdminDashboard = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {users.map((user, index) => (
-                                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <tr id={`user-${user.uid}`} key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{user.name || '—'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm capitalize text-gray-500 dark:text-gray-400">{user.role}</td>
@@ -234,8 +268,6 @@ const AdminDashboard = () => {
                     </table>
                 </div>
             </div>
-
-
             {/* Admin Key Section */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <div className="flex items-center justify-between mb-6">

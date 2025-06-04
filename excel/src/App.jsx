@@ -63,9 +63,10 @@ function App() {
   const [configOpen, setConfigOpen] = useState(false);
 
   // Routes where sidebar and navbar should be hidden
-  const hideSidebarRoutes = ["/login", "/register"];
+  const hideSidebarRoutes = ["/login", "/register", "/blocked"];
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && !isAdminRoute;
+  const userIsBlocked = user?.isActive === false;
+  const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && !isAdminRoute && !userIsBlocked;
 
   useEffect(() => {
     const auth = getAuth();
@@ -84,7 +85,21 @@ function App() {
     });
     return () => unsubscribe();
   }, [dispatch]);
-
+  // useEffect(() => {
+  //   const fetchProfile = async () => {
+  //     try {
+  //       const token = await getAuth().currentUser?.getIdToken();
+  //       const res = await fetch("/api/profile", {
+  //         headers: { Authorization: `Bearer ${token}` }
+  //       });
+  //       const data = await res.json();
+  //       setUser(data.user);
+  //     } catch (e) {
+  //       setUser(null);
+  //     }
+  //   };
+  //   fetchProfile();
+  // }, []);
   if (loading) return <Loading />;
 
   return (

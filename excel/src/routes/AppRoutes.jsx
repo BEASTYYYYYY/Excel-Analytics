@@ -14,6 +14,7 @@ import Playground from "../components/Playground";
 import Insight from "../components/Insight";
 import AdminRoutes from "./AdminRoutes";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
+import AccessBlocked from "../../AccessBlocked.jsx";
 
 const AppRoutes = () => {
     const user = useSelector(state => state.auth.user);
@@ -26,6 +27,7 @@ const AppRoutes = () => {
                 path="/"
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
             />
+            <Route path="/blocked" element={<AccessBlocked />} />
             <Route
                 path="/login"
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
@@ -36,7 +38,7 @@ const AppRoutes = () => {
             />
             <Route
                 path="/dashboard"
-                element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
+                element={isAuthenticated ? <ProtectedRoute><Dashboard /></ProtectedRoute>  : <Navigate to="/login" replace />}
             />
             <Route
                 path="/insight/:fileId"
