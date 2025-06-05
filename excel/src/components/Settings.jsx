@@ -4,9 +4,6 @@ import { updateUserSettings, changeUserPassword, sendResetEmail } from "./utils/
 
 const Settings = () => {
     const { user } = useSelector((state) => state.auth);
-    const [emailNotifications, setEmailNotifications] = useState(true);
-    const [darkModeDefault, setDarkModeDefault] = useState(false);
-    const [language, setLanguage] = useState("english");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -97,23 +94,16 @@ const Settings = () => {
         setMessage({ type: "", text: "" });
 
         try {
-            // Save settings to database
-            await updateUserSettings({
-                emailNotifications,
-                darkModeDefault,
-                language
-            });
-
-            setMessage({ type: "success", text: "Settings saved successfully!" });
-
+            
+            await updateUserSettings();
+            setMessage({ type: "success", text: "Settings updated successfully!" });
             // Clear message after 5 seconds
             setTimeout(() => setMessage({ type: "", text: "" }), 5000);
         } catch (error) {
             setMessage({
                 type: "error",
-                text: error.message || "Failed to save settings. Please try again."
+                text: error.message || "Failed to update settings"
             });
-            setTimeout(() => setMessage({ type: "", text: "" }), 5000);
         } finally {
             setLoading(false);
         }
@@ -128,7 +118,7 @@ const Settings = () => {
         );
     }
     return (
-        <div className="relative ml-[20rem] max-w-5xl mt-15 flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
+        <div className="relative max-w-5xl mt-15 flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
             <div className="relative bg-clip-border mx-5 rounded-xl overflow-hidden bg-gradient-to-tr from-[#252525] to-[#3a3a3a] text-white shadow-gray-900/20 shadow-lg -mt-8 mb-8 p-6">
                 <h6 className="block antialiased tracking-normal font-sans text-base font-semibold leading-relaxed text-white">
                     Account Settings
@@ -146,55 +136,6 @@ const Settings = () => {
             )}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                 <form onSubmit={handleSubmit}>
-                    <div className="mb-6">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-                            Notification Preferences
-                        </h2>
-                        <label className="flex items-center space-x-3 mb-3">
-                            <input
-                                type="checkbox"
-                                checked={emailNotifications}
-                                onChange={() => setEmailNotifications(!emailNotifications)}
-                                className="form-checkbox h-5 w-5 text-blue-600"
-                            />
-                            <span className="text-gray-700 dark:text-gray-300">
-                                Receive email notifications
-                            </span>
-                        </label>
-                    </div>
-
-                    <div className="mb-6">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-                            Appearance
-                        </h2>
-                        <label className="flex items-center space-x-3 mb-3">
-                            <input
-                                type="checkbox"
-                                checked={darkModeDefault}
-                                onChange={() => setDarkModeDefault(!darkModeDefault)}
-                                className="form-checkbox h-5 w-5 text-blue-600"
-                            />
-                            <span className="text-gray-700 dark:text-gray-300">
-                                Use dark mode by default
-                            </span>
-                        </label>
-                    </div>
-
-                    <div className="mb-6">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-                            Language
-                        </h2>
-                        <select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        >
-                            <option value="english">English</option>
-                            <option value="spanish">Spanish</option>
-                            <option value="french">French</option>
-                            <option value="german">German</option>
-                        </select>
-                    </div>
 
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">

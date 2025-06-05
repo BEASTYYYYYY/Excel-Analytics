@@ -6,7 +6,6 @@ import { fetchUserProfile, updateUserProfile } from "./utils/api";
 import { useDispatch } from "react-redux";
 import { updateUserName } from "../redux/authSlice";
 import { updateUserPhoto } from "../redux/authSlice";
-import TabSwitcher from "./TabSwitcher";
 
 const ProfilePage = () => {
     const dispatch = useDispatch();
@@ -25,7 +24,6 @@ const ProfilePage = () => {
             if (user) {
                 setIsFetching(true);
                 try {
-                    // First set from Firebase auth (immediately available)
                     setProfileData({
                         name: user.displayName || "",
                         email: user.email || "",
@@ -122,7 +120,7 @@ const ProfilePage = () => {
     }
 
     return (
-        <div className="container ml-[20rem] max-w-5xl ">
+        <div className="container max-w-5xl ">
             <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/background-image.png')] bg-cover	bg-center"><div className="absolute inset-0 h-full w-full bg-gray-900/75"></div></div>
             <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
                 {isFetching ? (
@@ -163,7 +161,7 @@ const ProfilePage = () => {
                                             </p>
                                         </div>
                                         </div>
-                                        <TabSwitcher/>
+
                                     </div>
                                 </div>
                             </div>

@@ -6,7 +6,6 @@ import {
   TableCellsIcon,
   BellIcon,
 } from "@heroicons/react/24/solid";
-import ConfigTool from "./ConfigTool";
 
 const Navbar = ({ isStickyEnabled }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,7 +53,6 @@ const Navbar = ({ isStickyEnabled }) => {
             {getCurrentPageLabel()}
           </h2>
         </div>
-
         <div className="flex items-center gap-4 w-full md:w-auto">
           <form onSubmit={handleSearch} className="relative w-full max-w-xs">
             <input
@@ -72,7 +70,7 @@ const Navbar = ({ isStickyEnabled }) => {
               🔍
             </button>
           </form>
-          <ConfigTool></ConfigTool>
+
           <nav className="hidden md:flex gap-2">
             {navItems.map(({ to }) => (
               <NavLink

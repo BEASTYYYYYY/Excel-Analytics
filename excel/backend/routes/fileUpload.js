@@ -183,10 +183,7 @@ router.get('/analyze/:id', async (req, res) => {
                 message: 'File record not found or you do not have permission to access it'
             });
         }
-
-        // Get the parsed data with safety check
         const parsedData = fileRecord.parsedData || [];
-
         // Make sure parsedData is a valid array before proceeding
         if (!Array.isArray(parsedData) || parsedData.length === 0) {
             return res.status(400).json({

@@ -10,7 +10,7 @@ export const getAllUsers = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Access denied' });
         }
         const users = await User.find(
-            { role: { $in: ['user', 'admin'] } },
+            { role: { $in: ['user', 'admin', 'superadmin'] } },
             '-_id uid name email photo role lastLogin isActive'
         );
         res.status(200).json({ success: true, users });
@@ -44,7 +44,7 @@ export const getUserProfile = async (req, res) => {
                 email: user.email,
                 photo: user.photo,
                 role: user.role,
-                isActive: user.isActive, // ← ADD THIS
+                isActive: user.isActive,
                 settings: user.settings || {}
             },
 

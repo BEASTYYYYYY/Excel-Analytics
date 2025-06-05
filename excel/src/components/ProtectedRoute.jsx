@@ -17,18 +17,19 @@ const ProtectedRoute = ({ children }) => {
             const user = getAuth().currentUser;
             if (!user) {
                 setIsAllowed(false);
+                setChecking(false); // ✅ add this
                 return;
             }
+
             const token = await user.getIdToken();
             for (let i = 0; i < 3; i++) {
                 try {
                     const res = await fetch("/api/profile", {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
+                        headers: { Authorization: `Bearer ${token}` },
                     });
                     if (res.status === 403) {
                         setIsAllowed(false);
+                        setChecking(false); // ✅ add this
                         return;
                     }
                     if (!res.ok) {
@@ -38,17 +39,21 @@ const ProtectedRoute = ({ children }) => {
                     }
                     const data = await res.json();
                     setIsAllowed(data.user?.isActive !== false);
+                    setChecking(false); // ✅ FINAL resolution
                     return;
                 } catch (err) {
                     console.warn("Profile check error, retrying:", err.message);
                     await new Promise((res) => setTimeout(res, 1000 * (i + 1)));
                 }
             }
+
             console.warn("Unable to confirm access after retries");
             setIsAllowed(true); // fallback to allow
+            setChecking(false); // ✅ must always end loading
         };
         checkAccess();
     }, []);
+    
     if (checking) {
         return (
             <div className="min-h-screen flex items-center justify-center text-gray-500 dark:text-gray-400">

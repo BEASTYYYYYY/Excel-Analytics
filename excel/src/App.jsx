@@ -39,28 +39,56 @@ function App() {
   const user = useSelector(state => state.auth.user);
   const isAuthenticated = !!user;
 
-  const [activeColorClass, setActiveColorClass] = useState(() => {
-    const stored = JSON.parse(localStorage.getItem("sidebarColor"));
-    return stored ? `${stored.from} ${stored.to}` : "from-gray-800 to-gray-700";
+  // Enhanced state management for configurator
+  const [configOpen, setConfigOpen] = useState(false);
+
+  // Initialize active color from localStorage or default
+  const [activeColor, setActiveColor] = useState(() => {
+    const stored = localStorage.getItem("sidebarColor");
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (error) {
+        console.error("Error parsing stored sidebar color:", error);
+      }
+    }
+    return colorOptions[0]; // Default to first color option
   });
 
-  const [sidebarStyle, setSidebarStyle] = useState(() => {
-    const stored = JSON.parse(localStorage.getItem("sidebarType"));
-    return stored ? stored.className : "bg-white text-gray-900";
+  // Initialize active type from localStorage or default
+  const [activeType, setActiveType] = useState(() => {
+    const stored = localStorage.getItem("sidebarType");
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (error) {
+        console.error("Error parsing stored sidebar type:", error);
+      }
+    }
+    return typeOptions[2]; // Default to "White" type
   });
+
+  // Generate activeColorClass for backward compatibility
+  const activeColorClass = `${activeColor.from} ${activeColor.to}`;
+  const sidebarStyle = activeType.className;
 
   const handleColorChange = (newColor) => {
-    const fullClass = `${newColor.from} ${newColor.to}`;
-    setActiveColorClass(fullClass);
+    setActiveColor(newColor);
     localStorage.setItem("sidebarColor", JSON.stringify(newColor));
   };
 
   const handleTypeChange = (newType) => {
-    setSidebarStyle(newType.className);
+    setActiveType(newType);
     localStorage.setItem("sidebarType", JSON.stringify(newType));
   };
 
-  const [configOpen, setConfigOpen] = useState(false);
+  const handleConfiguratorOpen = () => {
+    setConfigOpen(true);
+  };
+
+  const handleConfiguratorClose = () => {
+    setConfigOpen(false);
+  };
 
   // Routes where sidebar and navbar should be hidden
   const hideSidebarRoutes = ["/login", "/register", "/blocked"];
@@ -85,50 +113,62 @@ function App() {
     });
     return () => unsubscribe();
   }, [dispatch]);
-  // useEffect(() => {
-  //   const fetchProfile = async () => {
-  //     try {
-  //       const token = await getAuth().currentUser?.getIdToken();
-  //       const res = await fetch("/api/profile", {
-  //         headers: { Authorization: `Bearer ${token}` }
-  //       });
-  //       const data = await res.json();
-  //       setUser(data.user);
-  //     } catch (e) {
-  //       setUser(null);
-  //     }
-  //   };
-  //   fetchProfile();
-  // }, []);
+
+  // Handle ESC key to close configurator
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && configOpen) {
+        handleConfiguratorClose();
+      }
+    };
+
+    if (configOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [configOpen]);
+
   if (loading) return <Loading />;
 
   return (
     <ThemeProvider>
-
-      <div className="font-sans min-h-screen flex flex-col">
+      <div className="font-sans min-h-screen flex flex-col bg-gray-50">
         {/* Show sidebar and navbar only for non-admin routes */}
         {shouldShowSidebar && isAuthenticated && (
           <>
-            <Sidebar activeColorClass={activeColorClass} sidebarStyle={sidebarStyle} />
+            <Sidebar
+              activeColorClass={activeColorClass}
+              sidebarStyle={sidebarStyle}
+            />
             <Navbar isStickyEnabled={isSticky} />
-            {configOpen && (
-              <DashboardConfigurator
-                onColorChange={handleColorChange}
-                onTypeChange={handleTypeChange}
-                activeColorProp={colorOptions.find(c => `${c.from} ${c.to}` === activeColorClass) || colorOptions[0]}
-                activeTypeProp={typeOptions.find(t => t.className === sidebarStyle) || typeOptions[0]}
-                isStickyEnabled={isSticky}
-                onStickyToggle={() => setIsSticky((prev) => !prev)}
-              />
-            )}
-            <ConfigTool onClick={() => setConfigOpen(prev => !prev)} />
+
+            {/* Config Tool Button - Now receives configurator state */}
+            <ConfigTool
+              onClick={handleConfiguratorOpen}
+              isConfiguratorOpen={configOpen}
+            />
+
+            {/* Dashboard Configurator */}
+            <DashboardConfigurator
+              onColorChange={handleColorChange}
+              onTypeChange={handleTypeChange}
+              activeColorProp={activeColor}
+              activeTypeProp={activeType}
+              isStickyEnabled={isSticky}
+              onStickyToggle={() => setIsSticky((prev) => !prev)}
+              isOpen={configOpen}
+              onClose={handleConfiguratorClose}
+            />
           </>
         )}
-        <main className={`flex-grow ${shouldShowSidebar && isAuthenticated ? '' : 'w-full'}`}>
+
+        <main className={`flex-grow ${shouldShowSidebar && isAuthenticated ? 'xl:ml-80' : 'w-full'}`}>
           <AppRoutes />
         </main>
       </div>
-
     </ThemeProvider>
   );
 }

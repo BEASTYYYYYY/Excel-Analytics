@@ -9,12 +9,12 @@ import HistoryPage from "../components/HistoryPage.jsx";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import ProfilePage from "../components/ProfilePage.jsx";
 import Settings from "../components/Settings.jsx";
-import Support from "../components/Support.jsx";
 import Playground from "../components/Playground";
 import Insight from "../components/Insight";
 import AdminRoutes from "./AdminRoutes";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
 import AccessBlocked from "../../AccessBlocked.jsx";
+import AuthRedirect from '../components/AuthRedirect.jsx';
 
 const AppRoutes = () => {
     const user = useSelector(state => state.auth.user);
@@ -28,6 +28,7 @@ const AppRoutes = () => {
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
             />
             <Route path="/blocked" element={<AccessBlocked />} />
+            <Route path="/auth-redirect" element={<AuthRedirect />} />
             <Route
                 path="/login"
                 element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
@@ -60,10 +61,7 @@ const AppRoutes = () => {
                 path="/settings"
                 element={<ProtectedRoute><Settings /></ProtectedRoute>}
             />
-            <Route
-                path="/support"
-                element={<ProtectedRoute><Support /></ProtectedRoute>}
-            />
+            
             <Route path="/admin/*" element={<ProtectedAdminRoute><AdminRoutes /></ProtectedAdminRoute>} />
             <Route
                 path="*"

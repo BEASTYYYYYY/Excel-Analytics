@@ -4,7 +4,6 @@ import { BarChart3, Users, Upload, Activity, Brain, FileText, Calendar, Filter, 
 import { getAuth } from 'firebase/auth';
 
 const AdminDashboard = () => {
-    const [showAdminKey, setShowAdminKey] = useState(false);
     const [users, setUsers] = useState([]);
     const [unblockRequests, setUnblockRequests] = useState([]);
     const [currentUserRole, setCurrentUserRole] = useState(null);
@@ -89,10 +88,6 @@ const AdminDashboard = () => {
         }
     }, []);
 
-    const adminKey = 'abc123xyz789';
-    const handleRegenerate = () => {
-        alert('Admin key regenerated!');
-    };
 
     const handleRoleChange = async (uid, newRole) => {
         try {
@@ -268,45 +263,7 @@ const AdminDashboard = () => {
                     </table>
                 </div>
             </div>
-            {/* Admin Key Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                            <Key className="w-5 h-5 mr-2 text-blue-500" />
-                            Admin API Key
-                        </h2>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your administrative access key</p>
-                    </div>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="font-mono text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border">
-                                {showAdminKey ? adminKey : '••••••••••••••••'}
-                            </div>
-                            <button
-                                onClick={() => setShowAdminKey(!showAdminKey)}
-                                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                            >
-                                {showAdminKey ? (
-                                    <EyeOff className="w-4 h-4 text-gray-500" />
-                                ) : (
-                                    <Eye className="w-4 h-4 text-gray-500" />
-                                )}
-                            </button>
-                        </div>
-                        <button
-                            onClick={handleRegenerate}
-                            className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            <span>Regenerate</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+                            
         </div>
     );
 };

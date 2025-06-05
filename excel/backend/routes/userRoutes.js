@@ -10,6 +10,7 @@ import {
     getRecentActivities,
     getRecentUploads, deleteUpload
 } from '../controllers/userControllers.js';
+import { changePassword, broadcastEmail } from '../controllers/adminController.js';
 import { verifyFirebaseToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
@@ -26,5 +27,9 @@ router.delete('/uploads/:id', verifyFirebaseToken, deleteUpload);
 router.patch('/:uid/role', verifyFirebaseToken, changeUserRole);
 router.patch('/:uid/block', verifyFirebaseToken, toggleUserBlock);
 router.delete('/unblock-requests/:uid', verifyFirebaseToken, deleteUnblockRequest);
+router.post('/change-password', changePassword);
+
+// POST /admin/email-broadcast
+router.post('/email-broadcast', broadcastEmail);
   
 export default router;

@@ -66,7 +66,7 @@ export default function HistoryPage() {
     if (!authChecked) return <p className="p-4">Checking auth...</p>;
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12 ml-[20rem] mr-5">
+        <div className="mt-12 mb-8 flex flex-col gap-12  mr-5">
             <Notification notification={notification} onClose={() => setNotification({ type: '', message: '' })} />
             <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
                 <div className="relative bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-[#252525] to-[#3a3a3a] text-white shadow-gray-900/20 shadow-lg -mt-6 mb-8 p-6">

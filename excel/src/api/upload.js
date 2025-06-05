@@ -4,7 +4,6 @@ import path from 'path';
 import fs from 'fs';
 import * as XLSX from 'xlsx';
 import mongoose from 'mongoose';
-import CanvasData from '../models/canvasData.js'; // adjust path as needed
 import process from 'process';
 
 const router = express.Router();
@@ -45,14 +44,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         await connectToDB();
 
-        const newRecord = new CanvasData({
-            filename: req.file.originalname,
-            uploadDate: new Date(),
-            fileSize: (req.file.size / 1024).toFixed(2) + ' KB',
-            parsedData: data,
-        });
-
-        await newRecord.save();
 
         res.status(200).json({
             success: true,

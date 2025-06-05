@@ -203,7 +203,7 @@ const Playground = () => {
     }, [file]);
 
     return (
-        <div className="m-6 ml-[22rem] h-160 bg-white dark:bg-[#121212] text-black dark:text-white relative">
+        <div className="m-6 h-160 bg-white dark:bg-[#121212] text-black dark:text-white relative">
             {!file ? (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-400 dark:border-gray-700 rounded-lg bg-gray-100 dark:bg-[#1e1e1e]">
                     <Upload size={48} className="text-gray-500 dark:text-gray-400 mb-4" />

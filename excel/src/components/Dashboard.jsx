@@ -15,7 +15,7 @@ export default function Dashboard() {
     const [notification, setNotification] = useState({ type: '', message: '' });
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
-    const [ isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [analysis, setAnalysis] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [dataPreview, setDataPreview] = useState(null);
@@ -133,7 +133,7 @@ export default function Dashboard() {
         );
     }
     return (
-        <div className="flex-1 p-6 ml-[19rem]">
+        <div className="flex-1 p-6">
             <Notification notification={notification} onClose={() => setNotification({ type: '', message: '' })} />
             <main className="container flex-1 mx-auto">
                 <div className="space-y-6">
@@ -154,7 +154,7 @@ export default function Dashboard() {
                             View Ai Insights
                         </button>
                     )}
-                    {selectedHistoryItem && (                       
+                    {selectedHistoryItem && (
                         <ChartVisualization
                             selectedHistoryItem={selectedHistoryItem}
                             isAnalyzing={isAnalyzing}
@@ -173,8 +173,8 @@ export default function Dashboard() {
                                 onClick={() => navigate('/UploadHistory')}
                                 className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg transition-colors duration-300">
                                 View Upload History
-                            </button>       
-                        </div>                        
+                            </button>
+                        </div>
                     )}
                 </div>
             </main>
