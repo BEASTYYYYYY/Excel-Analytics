@@ -17,7 +17,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchRequests = async () => {
             const token = await getAuth().currentUser.getIdToken();
-            const res = await fetch("/unblock-requests", {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/unblock-requests`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -30,7 +30,7 @@ const AdminDashboard = () => {
         const fetchUsers = async () => {
             try {
                 const token = await getAuth().currentUser.getIdToken();
-                const res = await fetch('/api/users', {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
@@ -40,7 +40,7 @@ const AdminDashboard = () => {
                 } else {
                     setUsers(data.users);
                 }
-                const profileRes = await fetch('/api/profile', {
+                const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const profileData = await profileRes.json();
@@ -52,7 +52,7 @@ const AdminDashboard = () => {
                     // }
                 }
 
-                const statsRes = await fetch('/api/users/stats', {
+                const statsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/stats`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const statsData = await statsRes.json();

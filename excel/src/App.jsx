@@ -2,7 +2,7 @@
 // src/App.jsx
 import {  useLocation } from "react-router-dom";
 import { Provider, useDispatch, useSelector } from "react-redux";
-import { ThemeProvider } from "./context/themeProvider";
+import { ThemeProvider } from "./context/ThemeProvider";
 import store from "./redux/store";
 import Navbar from "./components/Navbar";
 import { initializeApp } from "firebase/app";

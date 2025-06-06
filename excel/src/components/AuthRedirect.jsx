@@ -15,7 +15,7 @@ const AuthRedirect = () => {
 
                 const token = await user.getIdToken();
 
-                const res = await fetch('/api/profile', {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 

@@ -48,7 +48,7 @@ const AdminSettings = () => {
 
         setPasswordLoading(true);
         try {
-            const res = await fetch('/admin/change-password', {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/change-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ currentPassword, newPassword }),
@@ -78,7 +78,7 @@ const AdminSettings = () => {
 
         setEmailLoading(true);
         try {
-            const res = await fetch('/admin/email-broadcast', {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/email-broadcast`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ recipients, subject, message }),

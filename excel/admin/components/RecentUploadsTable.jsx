@@ -10,7 +10,7 @@ const RecentUploadsTable = () => {
         const fetchUploads = async () => {
             try {
                 const token = await getAuth().currentUser.getIdToken();
-                const res = await fetch('/api/users/uploads/recent', {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/uploads/recent`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const text = await res.text();
@@ -32,7 +32,7 @@ const RecentUploadsTable = () => {
         try {
             const token = await getAuth().currentUser.getIdToken();
             // FIX: Use the correct backend route for admin delete
-            const res = await fetch(`/api/users/admin/uploads/${id}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/admin/uploads/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },
             });

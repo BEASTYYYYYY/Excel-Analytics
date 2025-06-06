@@ -16,7 +16,7 @@ const UploadStats = () => {
                 const token = await getAuth().currentUser.getIdToken();
 
                 // Fetch upload stats
-                const statsRes = await fetch('/api/users/stats', {
+                const statsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/stats`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const statsData = await statsRes.json();
@@ -26,7 +26,7 @@ const UploadStats = () => {
                 }
 
                 // Fetch recent activity
-                const recentRes = await fetch('/api/users/recent-activities', {
+                const recentRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/recent-activities`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const recentData = await recentRes.json();

@@ -27,7 +27,7 @@ export default function AccessBlocked() {
             const token = await auth.currentUser.getIdToken();
             for (let i = 0; i < 3; i++) {
                 try {
-                    const res = await fetch("/api/profile", {
+                    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
                     if (res.status === 403) {
@@ -61,7 +61,7 @@ export default function AccessBlocked() {
         const auth = getAuth();
         const token = await auth.currentUser.getIdToken();
 
-        const res = await fetch("/api/users/unblock-request", {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/unblock-request`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

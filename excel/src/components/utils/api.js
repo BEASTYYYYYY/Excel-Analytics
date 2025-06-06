@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const api = axios.create({
     baseURL: API_BASE_URL
 });
@@ -43,7 +43,7 @@ export const fetchUploadHistory = async () => {
             throw new Error("User not authenticated. Please log in to view your upload history.");
         }
         // Use the full URL to the backend API
-        const response = await api.get(`/api/upload/history`);
+        const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/upload/history`);
         if (response.data && response.data.success) {
             const processedHistory = response.data.history.map((item) => ({
                 id: item._id,
@@ -79,7 +79,7 @@ export const loadFileData = async (fileId) => {
         }
 
         // Use the full URL to the backend API
-        const response = await api.get(`/api/upload/${fileId}`);
+        const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/upload/${fileId}`);
         if (response.data && response.data.success) {
             const item = response.data;
             // Check if data exists and is valid
@@ -122,7 +122,7 @@ export const analyzeFile = async (fileId) => {
             throw new Error("User not authenticated. Please log in to analyze files.");
         }
 
-        const response = await api.get(`/api/upload/analyze/${fileId}`);
+        const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/upload/analyze/${fileId}`);
         if (response.data && response.data.success) {
             // Format the results for easy display
             const analysis = response.data.analysis;
@@ -172,7 +172,7 @@ export const deleteFile = async (fileId, event) => {
             throw new Error("User not authenticated. Please log in to delete files.");
         }
 
-        const response = await api.delete(`/api/upload/${fileId}`);
+        const response = await api.delete(`${import.meta.env.VITE_API_BASE_URL}/upload/${fileId}`);
         if (response.data && response.data.success) {
             return { success: true, message: "File deleted successfully!" };
         }
@@ -196,7 +196,7 @@ export const processExcelFile = async (selectedFile) => {
     formData.append('file', selectedFile);
     try {
         // Use the full URL to the backend API
-        const response = await api.post(`/api/upload`, formData, {
+        const response = await api.post(`${import.meta.env.VITE_API_BASE_URL}/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
         return response.data;
@@ -211,7 +211,7 @@ export const processExcelFile = async (selectedFile) => {
  */
 export const fetchUserProfile = async () => {
     try {
-        const response = await api.get('/api/profile');
+        const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/profile`);
         if (response.data && response.data.success) {
             return response.data.user;
         }
@@ -229,7 +229,7 @@ export const fetchUserProfile = async () => {
  */
 export const updateUserProfile = async (profileData) => {
     try {
-        const response = await api.put('/api/profile', profileData);
+        const response = await api.put(`${import.meta.env.VITE_API_BASE_URL}/profile`, profileData);
         if (response.data && response.data.success) {
             return response.data.user;
         }
@@ -247,7 +247,7 @@ export const updateUserProfile = async (profileData) => {
  */
 export const updateUserSettings = async (settingsData) => {
     try {
-        const response = await api.put('/api/settings', settingsData);
+        const response = await api.put(`${import.meta.env.VITE_API_BASE_URL}/settings`, settingsData);
         if (response.data && response.data.success) {
             return response.data.settings;
         }
@@ -283,7 +283,7 @@ export const changeUserPassword = async (passwordData) => {
         try {
             await reauthenticateWithCredential(user, credential);
             await updatePassword(user, newPassword);
-            await api.post('/api/password', passwordData);
+            await api.post(`${import.meta.env.VITE_API_BASE_URL}/password`, passwordData);
             return {
                 success: true,
                 message: "Password changed successfully!"
@@ -316,7 +316,7 @@ export const fetchFileContent = async (fileId) => {
         const token = await getAuthToken();
 
         // Replace with your actual API endpoint
-        const response = await fetch(`/api/files/${fileId}/content`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/files/${fileId}/content`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -396,7 +396,7 @@ export const sendResetEmail = async () => {
  */
 export const fetchAIInsight = async (fileId) => {
     try {
-        const response = await api.get(`/api/insight/${fileId}`);
+        const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/insight/${fileId}`);
         if (response.data && response.data.success) {
             return response.data.insights;
         }
