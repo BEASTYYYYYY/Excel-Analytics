@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import password from '../../excel/src/api/password.js';
+import password from './routes/password.js';
 import authRoutes from './routes/authRoutes.js';
 import fileUploadRoute from './routes/fileUpload.js';
 import profileRoutes from './routes/profileRoutes.js';
@@ -31,7 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/upload', fileUploadRoute);
 app.use('/api/profile', profileRoutes);
 app.use('/api/insight', insights);
-app.use('/api/password', password); 
+app.use('/api/password', password);
 app.use('/api/users', userRoutes)
 
 mongoose.connect(process.env.MONGO_URI)
