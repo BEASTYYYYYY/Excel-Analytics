@@ -1,8 +1,7 @@
 // backend/firebaseAdmin.js
 import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
 const serviceAccount = JSON.parse(
-    readFileSync('./serviceAccountKey-2.json', 'utf8') // Path to your Firebase service account
+    process.env.GOOGLE_SERVICE_ACCOUNT // Path to your Firebase service account
 );
 if (!admin.apps.length) {
     admin.initializeApp({
