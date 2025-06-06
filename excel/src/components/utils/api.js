@@ -211,7 +211,7 @@ export const processExcelFile = async (selectedFile) => {
  */
 export const fetchUserProfile = async () => {
     try {
-        const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/profile`);
+        const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/profile/`);
         if (response.data && response.data.success) {
             return response.data.user;
         }
@@ -229,7 +229,7 @@ export const fetchUserProfile = async () => {
  */
 export const updateUserProfile = async (profileData) => {
     try {
-        const response = await api.put(`${import.meta.env.VITE_API_BASE_URL}/profile`, profileData);
+        const response = await api.put(`${import.meta.env.VITE_API_BASE_URL}/profile/`, profileData);
         if (response.data && response.data.success) {
             return response.data.user;
         }

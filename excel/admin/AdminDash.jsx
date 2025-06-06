@@ -40,7 +40,7 @@ const AdminDashboard = () => {
                 } else {
                     setUsers(data.users);
                 }
-                const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile`, {
+                const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile/`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const profileData = await profileRes.json();
