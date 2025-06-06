@@ -30,7 +30,6 @@ const Navbar = ({ isStickyEnabled }) => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    console.log("Search query:", searchQuery);
   };
 
   const stickyStyles = isStickyEnabled

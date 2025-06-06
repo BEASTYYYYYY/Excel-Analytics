@@ -242,7 +242,7 @@ export default function Insight() {
     // </div>
 
     return (
-        <div className="relative ml-[20rem] mr-5 mt-15 flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
+        <div className="relative  mr-5 mt-15 flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
             <div className="relative bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-[#1f1f1f] to-[#3a3a3a] text-white shadow-gray-900/20 shadow-lg -mt-6 mb-8 p-6">
                 <h6 className="block antialiased tracking-normal font-sans text-base font-semibold leading-relaxed text-white">
                    AI Insights

@@ -51,7 +51,6 @@ const AdminDashboard = () => {
                     //     alert(profileData.notification);
                     // }
                 }
-                console.log("Current role:", profileData.user.role);
 
                 const statsRes = await fetch('/api/users/stats', {
                     headers: { Authorization: `Bearer ${token}` }

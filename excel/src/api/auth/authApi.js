@@ -6,7 +6,6 @@ import axios from 'axios';
 
 export const loginUser = async (userData) => {
     const response = await axios.post('/api/auth/login', userData);
-    console.log('Login response:', userData);
     return response.data;
 };
 

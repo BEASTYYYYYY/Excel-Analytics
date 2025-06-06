@@ -27,7 +27,6 @@ const Sidebar = ({ activeColorClass, sidebarStyle = "bg-white text-gray-900" }) 
     const dropdownRef = useRef(null);
 
     const toggleDropdown = () => setDropdownOpen(prev => !prev);
-    console.log("Sidebar rendered with user:", user);
     const handleLogout = async () => {
         const auth = getAuth();
         try {

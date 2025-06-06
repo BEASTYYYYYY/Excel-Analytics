@@ -194,7 +194,6 @@ export const processExcelFile = async (selectedFile) => {
     }
     const formData = new FormData();
     formData.append('file', selectedFile);
-    console.log('File data:', formData.get('file'));
     try {
         // Use the full URL to the backend API
         const response = await api.post(`/api/upload`, formData, {
