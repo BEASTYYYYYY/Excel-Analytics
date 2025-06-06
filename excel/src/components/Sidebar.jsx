@@ -27,7 +27,7 @@ const Sidebar = ({ activeColorClass, sidebarStyle = "bg-white text-gray-900" }) 
     const dropdownRef = useRef(null);
 
     const toggleDropdown = () => setDropdownOpen(prev => !prev);
-
+    console.log("Sidebar rendered with user:", user);
     const handleLogout = async () => {
         const auth = getAuth();
         try {
@@ -49,11 +49,6 @@ const Sidebar = ({ activeColorClass, sidebarStyle = "bg-white text-gray-900" }) 
         setDropdownOpen(false);
     };
 
-    const handleSupport = () => {
-        navigate("/support");
-        setDropdownOpen(false);
-    };
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -70,14 +65,21 @@ const Sidebar = ({ activeColorClass, sidebarStyle = "bg-white text-gray-900" }) 
         return gradientClass.includes("gray-100") ? "text-black" : "text-white";
     };
 
+    
     const navItems = [
         { to: "/dashboard", icon: HomeIcon, label: "Dashboard" },
         { to: "/UploadHistory", icon: TableCellsIcon, label: "Upload History" },
         { to: "/playground", icon: BellIcon, label: "Playground" },
-        { to: "/admin", icon: ShieldCheckIcon, label: "Admin Dashboard" },
-
+        
     ];
-
+    const isAdmin = user?.role === "admin" || user?.role === "superadmin";
+    if (isAdmin) {
+        navItems.push({
+            to: "/admin",
+            icon: ShieldCheckIcon,
+            label: "Admin Panel"
+        });
+    }
     const isDarkSidebar = !sidebarStyle.includes("bg-white") && !sidebarStyle.includes("bg-transparent");
 
     return (
@@ -114,7 +116,9 @@ const Sidebar = ({ activeColorClass, sidebarStyle = "bg-white text-gray-900" }) 
                         {/* Subtle glow effect for active items */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </NavLink>
+                    
                 ))}
+               
             </nav>
 
             {/* User Profile Section - Improved */}
@@ -164,16 +168,6 @@ const Sidebar = ({ activeColorClass, sidebarStyle = "bg-white text-gray-900" }) 
                                         <Cog6ToothIcon className="h-5 w-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                                         <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white font-medium">
                                             Account Settings
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        onClick={handleSupport}
-                                        className="w-full px-4 py-3 text-left flex items-center space-x-3 hover:bg-blue-50/70 dark:hover:bg-gray-700/70 transition-colors duration-150 group"
-                                    >
-                                        <QuestionMarkCircleIcon className="h-5 w-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
-                                        <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white font-medium">
-                                            Help & Support
                                         </span>
                                     </button>
                                 </div>

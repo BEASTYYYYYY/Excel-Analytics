@@ -5,19 +5,26 @@ import axios from 'axios';
 // ✅ Login thunk
 export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) => {
     try {
+        // Fetch user profile from backend after login to get role
         const res = await axios.post('/api/auth/login', userData);
+        // Now fetch the profile (which includes role)
+        const profileRes = await axios.get('/api/profile', {
+            headers: {
+                Authorization: `Bearer ${res.data.token || res.data.accessToken}`
+            }
+        });
         const auth = getAuth();
         const firebaseUser = auth.currentUser;
         return {
             ...res.data,
-            displayName: firebaseUser?.displayName || "",
-            photoURL: firebaseUser?.photoURL || ""
+            ...profileRes.data.user, // merge backend user (with role) into Redux user
+            displayName: firebaseUser?.displayName || profileRes.data.user?.name || "",
+            photoURL: firebaseUser?.photoURL || profileRes.data.user?.photo || "",
         };
     } catch (err) {
         return thunkAPI.rejectWithValue(err.response?.data?.message || 'Login failed');
     }
 });
-
 // ✅ Register thunk
 export const register = createAsyncThunk('auth/register', async (userData, thunkAPI) => {
     try {
@@ -62,6 +69,13 @@ const authSlice = createSlice({
             if (state.user) {
                 state.user.photoURL = action.payload;
                 const updatedUser = { ...state.user, photoURL: action.payload };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+            }
+        },
+        updateUserRole: (state, action) => {
+            if (state.user) {
+                state.user.role = action.payload;
+                const updatedUser = { ...state.user, role: action.payload };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
             }
         },

@@ -68,6 +68,7 @@ router.post('/', upload.single('file'), async (req, res) => {
             status: 'Processed',
             parsedData: jsonData, // ⬅️ Store raw rows
             userId: req.user.uid,
+            user: req.user.uid 
         });
         await fileUploadHistory.save();
         fs.unlinkSync(filePath);

@@ -2,6 +2,9 @@
 import { getAuth } from 'firebase-admin/auth';
 import User from '../models/userModel.js';
 import { Resend } from 'resend';
+import dotenv from 'dotenv';
+import FileUploadHistory from '../models/fileUploadHistory.js';
+dotenv.config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 // Only superadmins can change password here
@@ -55,5 +58,23 @@ export const broadcastEmail = async (req, res) => {
     } catch (error) {
         console.error('Error sending emails:', error);
         res.status(500).json({ message: 'Failed to send broadcast email' });
+    }
+};
+
+export const adminDeleteUpload = async (req, res) => {
+    try {
+        const currentUser = await User.findOne({ uid: req.user.uid });
+        if (!currentUser || !currentUser.isAdmin()) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+        const { id } = req.params;
+        const deleted = await FileUploadHistory.findByIdAndDelete(id);
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: 'Upload not found' });
+        }
+        res.status(200).json({ success: true, message: 'Upload deleted by admin' });
+    } catch (err) {
+        console.error('Error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };

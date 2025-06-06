@@ -54,7 +54,6 @@
   display: none;
   /* Chrome, Safari and Opera */
 }
-
 .dark {
   --bg-primary: 245 247 248;
   --text-primary: 249 250 251;

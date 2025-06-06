@@ -31,21 +31,29 @@ const RecentUploadsTable = () => {
         if (!window.confirm('Are you sure you want to delete this upload?')) return;
         try {
             const token = await getAuth().currentUser.getIdToken();
-            const res = await fetch(`/api/uploads/${id}`, {
+            // FIX: Use the correct backend route for admin delete
+            const res = await fetch(`/api/users/admin/uploads/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },
             });
-            const data = await res.json();
-            if (data.success) {
+            // Defensive: handle empty response
+            let data = {};
+            try {
+                data = await res.json();
+            } catch {
+                data = {};
+            }
+            if (res.ok && data.success) {
                 setUploads(prev => prev.filter(upload => upload._id !== id));
             } else {
-                alert('Delete failed: ' + data.message);
+                alert('Delete failed: ' + (data.message || res.statusText));
             }
         } catch (err) {
             console.error('Error deleting upload:', err);
             alert('Failed to delete upload');
         }
     };
+    
 
     const filteredUploads = uploads.filter(upload =>
         upload.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,7 +145,7 @@ const RecentUploadsTable = () => {
                     <tbody>
                         {filteredUploads.map((upload, index) => (
                             <tr key={index} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td className="py-4 px-4 text-sm text-gray-900 dark:text-white">{upload.userName || '—'}</td>
+                                <td className="py-4 px-4 text-sm text-gray-900 dark:text-white">{upload.userName || upload.user || upload.name || '—'}</td>
 
                                 <td className="py-4 px-4 text-sm text-gray-900 dark:text-white flex items-center gap-2">
                                     <FileText className="w-4 h-4 text-gray-400" />

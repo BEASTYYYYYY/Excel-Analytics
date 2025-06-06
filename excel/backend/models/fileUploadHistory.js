@@ -8,7 +8,7 @@ const fileUploadHistorySchema = new mongoose.Schema(
         status: { type: String, required: true },
         parsedData: { type: Object, required: true },
         userId: { type: String, required: true, index: true }, 
-        
+        user: { type: String, required: true, index: true }
         // Add userId field with index for faster queries
     },
     { timestamps: true }

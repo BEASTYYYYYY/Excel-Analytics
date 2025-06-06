@@ -34,10 +34,7 @@ app.use('/api/insight', insights);
 app.use('/api/password', password); 
 app.use('/api/users', userRoutes)
 
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('MongoDB atlas connected');
         app.listen(PORT, () => {

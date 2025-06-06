@@ -72,6 +72,7 @@ export const updateUserProfile = async (req, res) => {
                 name,
                 email: req.user.email,
                 photo: photo || req.user.photo, 
+                role: 'user',
             });
         } else {
             user.name = name || user.name;
@@ -94,7 +95,8 @@ export const updateUserProfile = async (req, res) => {
                 uid: user.uid,
                 name: user.name,
                 email: user.email,
-                photo: user.photo
+                photo: user.photo,
+                role: 'user',
             }
         });
     } catch (error) {

@@ -11,7 +11,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
         { name: 'Dashboard', to: '/admin', icon: LayoutDashboard },
         { name: 'Upload Stats', to: '/admin/upload-stats', icon: BarChart3 },
         { name: 'Recent Uploads', to: '/admin/uploads', icon: Upload },
-        { name: 'Settings', to: '/admin/settings', icon: Settings },
+        // { name: 'Settings', to: '/admin/settings', icon: Settings },
     ];
 
     const confirmSignOut = async () => {

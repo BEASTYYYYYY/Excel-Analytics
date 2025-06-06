@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 // src/App.jsx
-import { Route, Routes, useLocation } from "react-router-dom";
+import {  useLocation } from "react-router-dom";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { ThemeProvider } from "./context/themeProvider";
 import store from "./redux/store";
@@ -14,16 +15,16 @@ import Sidebar from "./components/Sidebar";
 import DashboardConfigurator from "./components/Configurator";
 import { colorOptions, typeOptions } from "./components/Configurator";
 import ConfigTool from "./components/ConfigTool";
-import process from "process";
 import AppRoutes from "./routes/AppRoutes";
+import axios from "axios";
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 initializeApp(firebaseConfig);
@@ -91,22 +92,41 @@ function App() {
     setConfigOpen(false);
   };
 
-  // Routes where sidebar and navbar should be hidden
-  const hideSidebarRoutes = ["/login", "/register", "/blocked"];
-  const isAdminRoute = location.pathname.startsWith('/admin');
-  const userIsBlocked = user?.isActive === false;
-  const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && !isAdminRoute && !userIsBlocked;
-
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        dispatch(setUser({
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-          uid: firebaseUser.uid
-        }));
+        try {
+          const token = await firebaseUser.getIdToken();
+          const res = await axios.get("/api/profile", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data && res.data.user) {
+            dispatch(setUser({
+              ...res.data.user,
+              displayName: firebaseUser.displayName || res.data.user.name || "",
+              photoURL: firebaseUser.photoURL || res.data.user.photo || "",
+              email: firebaseUser.email,
+              uid: firebaseUser.uid
+            }));
+          } else {
+            // fallback to firebase only
+            dispatch(setUser({
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName,
+              photoURL: firebaseUser.photoURL,
+              uid: firebaseUser.uid
+            }));
+          }
+        } catch (err) {
+          // fallback to firebase only
+          dispatch(setUser({
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            uid: firebaseUser.uid
+          }));
+        }
       } else {
         dispatch(logout());
       }
@@ -114,6 +134,12 @@ function App() {
     });
     return () => unsubscribe();
   }, [dispatch]);
+
+  // Routes where sidebar and navbar should be hidden
+  const hideSidebarRoutes = ["/login", "/register", "/blocked"];
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const userIsBlocked = user?.isActive === false;
+  const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && !isAdminRoute && !userIsBlocked;
 
   // Handle ESC key to close configurator
   useEffect(() => {
