@@ -14,7 +14,7 @@ const Register = () => {
 
     const syncWithMongo = async (user) => {
         const token = await user.getIdToken();
-        await axios.post('/api/auth/firebase-login', { token });
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/firebase-login`, { token });
     };
 
     const signUpWithGoogle = async () => {

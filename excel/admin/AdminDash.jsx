@@ -91,7 +91,7 @@ const AdminDashboard = () => {
     const handleRoleChange = async (uid, newRole) => {
         try {
             const token = await getAuth().currentUser.getIdToken();
-            const res = await fetch(`/api/users/${uid}/role`, {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${uid}/role`, {
                 method: 'PATCH',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -118,7 +118,7 @@ const AdminDashboard = () => {
     const handleBlockToggle = async (uid) => {
         try {
             const token = await getAuth().currentUser.getIdToken();
-            const res = await fetch(`/api/users/${uid}/block`, {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${uid}/block`, {
                 method: "PATCH",
                 headers: {
                     Authorization: `Bearer ${token}`

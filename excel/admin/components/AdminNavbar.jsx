@@ -14,8 +14,6 @@ const AdminNavbar = ({ darkMode, setDarkMode, sidebarOpen, setSidebarOpen }) => 
         { name: 'Dashboard', to: '/admin' },
         { name: 'Upload Stats', to: '/admin/upload-stats' },
         { name: 'Recent Uploads', to: '/admin/uploads' },
-        { name: 'API Keys', to: '/admin/api-keys' },
-        { name: 'User Management', to: '/admin/users' },
         { name: 'Settings', to: '/admin/settings' },
     ];
 

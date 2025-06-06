@@ -6,9 +6,9 @@ import axios from 'axios';
 export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) => {
     try {
         // Fetch user profile from backend after login to get role
-        const res = await axios.post('/api/auth/login', userData);
+        const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, userData);
         // Now fetch the profile (which includes role)
-        const profileRes = await axios.get('/api/profile', {
+        const profileRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/profile`, {
             headers: {
                 Authorization: `Bearer ${res.data.token || res.data.accessToken}`
             }
@@ -28,7 +28,7 @@ export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) =
 // ✅ Register thunk
 export const register = createAsyncThunk('auth/register', async (userData, thunkAPI) => {
     try {
-        const res = await axios.post('/api/auth/register', userData);
+        const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, userData);
         const auth = getAuth();
         const firebaseUser = auth.currentUser;
 

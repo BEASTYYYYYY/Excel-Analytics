@@ -98,7 +98,7 @@ function App() {
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken();
-          const res = await axios.get("/api/profile", {
+          const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/profile`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data && res.data.user) {

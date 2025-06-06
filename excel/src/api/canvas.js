@@ -1,9 +1,6 @@
-// pages/api/canvas.js
 import fs from 'fs';
 import path from 'path';
 import process from 'process';
-
-
 export default function handler(req, res) {
     const historyFile = path.join(process.cwd() || '', 'upload', 'history.json');
 
