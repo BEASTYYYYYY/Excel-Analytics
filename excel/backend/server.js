@@ -11,6 +11,8 @@ import fileUploadRoute from './routes/fileUpload.js';
 import profileRoutes from './routes/profileRoutes.js';
 import insights from './routes/insights.js';
 import userRoutes from './routes/userRoutes.js';
+import cors from 'cors';
+import fs from 'fs';
 
 dotenv.config();
 const app = express();
@@ -19,12 +21,19 @@ const PORT = process.env.PORT || 5000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import fs from 'fs';
 if (!fs.existsSync('./uploads')) {
     fs.mkdirSync('./uploads');
 }
 
-app.use(cors());
+const allowedOrigins = [
+    'https://excel-analytics.vercel.app',
+    'http://localhost:5173' // (optional, for local dev)
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true, // if you use cookies or Authorization headers
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
