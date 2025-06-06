@@ -25,3 +25,6 @@ dist-ssr
 
 excel/backend/serviceAccountKey.json
 *.json
+
+.env
+.env.local
