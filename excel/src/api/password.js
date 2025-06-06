@@ -1,4 +1,3 @@
-import React from "react";
 import express from 'express';
 import { getAuth } from 'firebase-admin/auth';
 import { verifyFirebaseToken } from "../../backend/middleware/verifyToken.js";
