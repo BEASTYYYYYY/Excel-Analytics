@@ -1,30 +1,47 @@
+# Node modules and build output
+node_modules/
+dist/
+dist-ssr/
+build/
+out/
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# OS files
+.DS_Store
+Thumbs.db
 
 # Editor directories and files
-.vscode/*
+.vscode/
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-excel/backend/serviceAccountKey.json
-*.json
-
+# Env files (frontend and backend)
 .env
 .env.local
+.env.*.local
+excel/.env
+excel/.env.local
+excel/backend/.env
+excel/backend/.env.local
+excel/backend/.env.*.local
+
+# Service account and secrets
+excel/backend/serviceAccountKey.json
+
+# Misc
+*.json
+
+# Ignore gitignore itself (not needed, but doesn't hurt)
+.gitignore
