@@ -27,6 +27,9 @@ Thumbs.db
 *.sln
 *.sw?
 
+excel/components.json
+excel/jsconfig.json
+
 # Env files (frontend and backend)
 .env
 .env.local
@@ -36,12 +39,15 @@ excel/.env.local
 excel/backend/.env
 excel/backend/.env.local
 excel/backend/.env.*.local
+excel/backend/serviceAccountKey.json
+excel/backend/serviceAccountKey-2.json
+
 
 # Service account and secrets
 excel/backend/serviceAccountKey.json
 
 # Misc
-*.json
+
 
 # Ignore gitignore itself (not needed, but doesn't hurt)
 .gitignore
