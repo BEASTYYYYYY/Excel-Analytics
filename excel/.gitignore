@@ -51,3 +51,5 @@ excel/backend/serviceAccountKey.json
 
 # Ignore gitignore itself (not needed, but doesn't hurt)
 .gitignore
+!.vscode/extensions.gitignore
+excel/.gitignore
